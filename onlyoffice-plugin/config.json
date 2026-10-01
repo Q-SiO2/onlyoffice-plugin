@@ -1,0 +1,5 @@
+{
+  "name":"Palo Alto Live", "guid":"asc.{A7E2C42A-3184-4E8B-9477-893BC54F8591}",
+  "version":"1.0.0", "minVersion":"8.3.0", "baseUrl":"",
+  "variations":[{"description":"Palo Alto Live — interactions en classe", "url":"index.html", "icons":["icon.png", "icon@2x.png"], "EditorsSupport":["slide"], "initDataType":"none", "initData":"", "type":"panelRight", "buttons":[]}]
+}

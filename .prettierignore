@@ -1,0 +1,9 @@
+node_modules
+dist
+onlyoffice-plugin/dist
+onlyoffice-plugin/vendor
+data
+work
+test-results
+playwright-report
+package-lock.json

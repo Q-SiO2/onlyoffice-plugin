@@ -1,0 +1,19 @@
+{
+  "title": "Présentation Palo Alto",
+  "scenes": [
+    {
+      "id": "silence", "title": "On ne peut pas ne pas communiquer",
+      "poll": {"question": "Yassine communique-t-il malgré son silence ?", "mode": "single", "options": [
+        {"id":"oui", "label":"Oui"}, {"id":"non", "label":"Non"}, {"id":"depend", "label":"Ça dépend"}
+      ]},
+      "words": {"prompt": "Quels éléments vous ont fait penser qu'il communiquait ?", "options": ["Silence", "Regard", "Posture", "Distance", "Gestes", "Soupir", "Expression faciale"], "maxSelections": 3, "allowCustom": false},
+      "explanation": "Même sans paroles, le silence, le regard et la posture peuvent être interprétés par autrui."
+    },
+    {
+      "id": "relation", "title": "Contenu et relation",
+      "poll": {"question":"Le ton change-t-il le sens de « Fais comme tu veux » ?", "mode":"single", "options":[{"id":"oui","label":"Oui"},{"id":"non","label":"Non"},{"id":"contexte","label":"Selon le contexte"}]},
+      "words": {"prompt":"Qu'est-ce qui influence la relation ?", "options":["Ton", "Regard", "Contexte", "Distance", "Gestes"], "maxSelections":3, "allowCustom":false},
+      "explanation":"Chaque message transmet un contenu et indique comment comprendre la relation entre les personnes."
+    }
+  ]
+}
