@@ -12,7 +12,7 @@ The delivery includes `paloalto-live-project.zip` (portable source, lockfile, do
 
 The platform is deployed at <https://paloalto-live-production.up.railway.app>. Open <https://paloalto-live-production.up.railway.app/presenter> to control it. In Railway, open project **appealing-charisma**, service **paloalto-live**, **Variables** and reveal/copy `ADMIN_KEY` for presenter/plugin login. Do not share that key with participants.
 
-Railway remains on the active Trial allowance. A 500 MB persistent volume is mounted at `/app/data`; the Docker build, mounted startup and HTTPS health check passed. The class whitelist is empty, so import your class and distribute personal codes before presenting. See `docs/RAILWAY.md` for the protected import workflow and credit/expiry checks.
+Railway remains on the active Trial allowance. A 500 MB persistent volume is mounted at `/app/data`; the Docker build, mounted startup, HTTPS health, presenter login and session survival across redeployment passed. 31 simultaneous hosted WebSocket observers received session snapshots without creating students or votes. The empty verification session is finished; choose **Démarrer une session** when preparing your class. The class whitelist is empty, so import your class and distribute personal codes before presenting. See `docs/RAILWAY.md` for the protected import workflow and credit/expiry checks.
 
 ## Run the isolated demo locally
 

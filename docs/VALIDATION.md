@@ -39,7 +39,7 @@ The installed local plugin copy may precede final source refinements; install th
 
 Railway built the root Dockerfile from GitHub `main` and deployment `d4af48ea-8645-45af-b3b7-bdea80bcd930` succeeded. Its runtime logs confirm the 500 MB volume mounted and production startup completed. Service configuration readback confirms `/app/data`, one replica, and the `/api/health` healthcheck. HTTPS health returns `ok: true`, `demo: false`; public state uses the actual HTTPS join URL. The live participant page loads with the shared logo and no browser console errors. Railway stayed on Trial with no billing upgrade. See `RAILWAY.md` for actual settings.
 
-Production has no real student whitelist yet. Cloud record survival across a further restart, real phone voting, and native ONLYOFFICE insertion remain rehearsal checks. The local persistence test passes. Compose/Render/Caddy remain alternative templates. No SMS provider or Windows firewall/network changes were made.
+Presenter login with the generated Railway key passed. An empty session survived deliberate redeployment `cbfbd11b-9007-4b7d-9414-40a733fc69dd`: the same session ID and WAITING state were read back afterward. Before restarting, 31 concurrent production WebSocket observer connections received valid snapshots; no participant records or votes were created. The empty session was finished after verification. Production has no real student whitelist yet. Real phone voting and native ONLYOFFICE insertion remain rehearsal checks. The local authenticated 100-client voting and persistence tests pass. Compose/Render/Caddy remain alternative templates. No SMS provider or Windows firewall/network changes were made.
 
 ## Classroom rehearsal to complete
 
