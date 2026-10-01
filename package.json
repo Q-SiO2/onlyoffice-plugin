@@ -27,7 +27,9 @@
     "import:class": "tsx scripts/import-class.ts",
     "package:plugin": "tsx scripts/package-plugin.ts",
     "check": "npm run lint && npm run typecheck && npm test && npm run build",
-    "purge": "tsx scripts/purge.ts"
+    "purge": "tsx scripts/purge.ts",
+    "verify:production": "tsx scripts/verify-production.ts",
+    "package:release": "tsx scripts/package-release.ts"
   },
   "dependencies": {
     "cors": "^2.8.5",

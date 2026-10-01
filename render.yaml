@@ -1,0 +1,31 @@
+services:
+  - type: web
+    name: paloalto-live
+    runtime: node
+    plan: starter
+    buildCommand: npm ci && npm run build
+    startCommand: npm start
+    healthCheckPath: /api/health
+    disk:
+      name: paloalto-data
+      mountPath: /var/data
+      sizeGB: 1
+    envVars:
+      - key: NODE_VERSION
+        value: '24'
+      - key: DEMO_MODE
+        value: 'false'
+      - key: HOST
+        value: 0.0.0.0
+      - key: TRUST_PROXY
+        value: '1'
+      - key: DATABASE_PATH
+        value: /var/data/paloalto.sqlite
+      - key: PUBLIC_URL
+        sync: false
+      - key: ADMIN_KEY
+        generateValue: true
+      - key: PHONE_HASH_SECRET
+        generateValue: true
+      - key: ALLOWED_ORIGINS
+        value: onlyoffice://plugin,null
