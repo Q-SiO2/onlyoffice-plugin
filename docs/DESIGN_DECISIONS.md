@@ -71,3 +71,9 @@ ONLYOFFICE's modern networking guide describes `onlyoffice://plugin`; installed 
 Vercel's [June 2026 knowledge base](https://vercel.com/kb/guide/do-vercel-serverless-functions-support-websocket-connections) now describes WebSocket support, lifetime-bound to function duration with external state recommended. Its [older limits page](https://vercel.com/docs/limits) says WebSocket servers are unsupported. Favor the newer guidance; do not repeat the outdated categorical restriction. This particular SQLite single-process service is not adapted to that runtime regardless.
 
 Render [free services](https://render.com/docs/free) have ephemeral filesystems and idle spin-down; [persistent disks](https://render.com/docs/disks) require a paid service. Local LAN is therefore the only supplied zero-cost durable deployment. No hosted free-tier durability is promised.
+
+## 9. Hosted provider and UI refresh
+
+The follow-up requirement is to host off the presentation laptop, using **free/trial only**. Railway is now selected for the existing single-process service and volume; see [RAILWAY.md](RAILWAY.md). Its Trial/Free credits and volume expiry are finite, so this updates the earlier LAN-only recommendation without promising permanent free uptime. Vercel's current [WebSocket documentation](https://vercel.com/docs/functions/websockets) confirms support but requires durable shared state across function instances; this SQLite/in-process implementation would need a persistence/presence redesign there.
+
+Actual free Unlumen source primitives provide buttons, live badges, counters, result tabs/highlights and link copying. The exact plugin icon is shared across web, plugin and exported results; locally bundled fonts and aligned SVG icons replace decorative CSS graphics. See [UI_DESIGN.md](UI_DESIGN.md) for provenance and accessibility adaptations. No paid UI resource was used.

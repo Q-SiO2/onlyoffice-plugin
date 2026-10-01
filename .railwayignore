@@ -1,0 +1,13 @@
+.git/
+node_modules/
+.env
+.env.*
+data/
+work/
+test-results/
+playwright-report/
+dist/
+onlyoffice-plugin/dist/
+*.private.csv
+*.sqlite*
+*.log

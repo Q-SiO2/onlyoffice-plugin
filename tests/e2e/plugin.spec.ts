@@ -6,6 +6,7 @@ import { unzipSync } from 'fflate';
 test('packaged plugin connects, opens QR window and serializes additive image insertion', async ({
   page,
 }) => {
+  await page.setViewportSize({ width: 360, height: 850 });
   const archive = unzipSync(await readFile('dist/paloalto-live.plugin'));
   const manifest = JSON.parse(new TextDecoder().decode(archive['config.json']));
   expect(manifest.variations[0].type).toBe('panelRight');
@@ -19,8 +20,11 @@ test('packaged plugin connects, opens QR window and serializes additive image in
     'window.css',
     'vendor/plugins.js',
     'icon.png',
+    'vendor/licenses/UNLUMEN-MIT.txt',
+    'vendor/licenses/MANROPE-OFL.txt',
   ])
     expect(archive[file]).toBeTruthy();
+  expect(Object.keys(archive).some((file) => file.endsWith('.woff2'))).toBe(true);
   await page.addInitScript(() => {
     const images: { src: string; width: number; height: number; x?: number; y?: number }[] = [];
     const objects: unknown[] = [{ existing: true }];
@@ -118,5 +122,7 @@ test('packaged plugin connects, opens QR window and serializes additive image in
   await expect
     .poll(() => page.evaluate(() => Reflect.get(window, '__pluginTest').images.length))
     .toBe(3);
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+  await expect(page.locator('.brand-icon')).toHaveJSProperty('naturalWidth', 56);
   await page.screenshot({ path: 'docs/screenshots/plugin-harness.png', fullPage: true });
 });

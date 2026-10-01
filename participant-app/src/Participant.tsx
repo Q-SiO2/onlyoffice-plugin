@@ -4,6 +4,8 @@ import { request, ApiError } from './api.ts';
 import { Brand, Connection, Notice } from './components.tsx';
 import { useLive } from './useLive.ts';
 import { fr } from './i18n.ts';
+import { Button, Card, Input } from './ui.tsx';
+import { ArrowRight, Check, Clock3, Radio, ShieldCheck } from 'lucide-react';
 
 export function Participant() {
   const querySession = new URLSearchParams(location.search).get('session') || '';
@@ -77,13 +79,10 @@ export function Participant() {
       </header>
       <main className="participant-main">
         {!token ? (
-          <section className="login-card">
-            <div className="decor" aria-hidden="true">
-              <span />
-              <i />
-              <b />
+          <Card as="section" className="login-card">
+            <div className="login-kicker">
+              <Radio aria-hidden="true" /> PARTICIPATION EN DIRECT
             </div>
-            <div className="eyebrow">UNE CLASSE. PLUSIEURS REGARDS.</div>
             <h1>
               Votre point de vue
               <br />
@@ -94,7 +93,7 @@ export function Participant() {
             </p>
             <form onSubmit={login}>
               <label htmlFor="phone">{fr.phone}</label>
-              <input
+              <Input
                 id="phone"
                 type="tel"
                 autoComplete="tel"
@@ -105,7 +104,7 @@ export function Participant() {
                 maxLength={40}
               />
               <label htmlFor="pin">{fr.code}</label>
-              <input
+              <Input
                 id="pin"
                 type="password"
                 autoComplete="off"
@@ -115,12 +114,12 @@ export function Participant() {
                 required
                 maxLength={64}
               />
-              <button
+              <Button
                 className="primary full"
                 disabled={busy || !session || s?.state === 'FINISHED'}
               >
-                {busy ? 'Connexion…' : fr.login} <span aria-hidden="true">↗</span>
-              </button>
+                {busy ? 'Connexion…' : fr.login} <ArrowRight aria-hidden="true" />
+              </Button>
             </form>
             {!session && <Notice>La présentation n’a pas encore commencé.</Notice>}
             {s?.state === 'FINISHED' && <Notice>Cette présentation est terminée.</Notice>}
@@ -131,11 +130,14 @@ export function Participant() {
               </Notice>
             )}
             {error && <Notice error>{error}</Notice>}
-            <p className="fine muted">
-              Vos réponses sont présentées de manière anonyme. Votre numéro n’est jamais affiché aux
-              autres participants.
+            <p className="fine muted privacy-note">
+              <ShieldCheck aria-hidden="true" />
+              <span>
+                Vos réponses sont présentées de manière anonyme. Votre numéro n’est jamais affiché
+                aux autres participants.
+              </span>
             </p>
-          </section>
+          </Card>
         ) : s ? (
           <Activity
             key={`${s.session}:${s.scene?.id}:${s.epoch}`}
@@ -270,7 +272,7 @@ function Activity({
     await send(vote);
   }
   return (
-    <section className="vote-card">
+    <Card as="section" className="vote-card">
       <div className="eyebrow">
         SCÈNE {s.sceneIndex + 1} <span className="live-pill">VOTE OUVERT</span>
       </div>
@@ -312,7 +314,7 @@ function Activity({
           </p>
           <div className="chips">
             {scene.words.options.map((w) => (
-              <button
+              <Button
                 type="button"
                 key={w}
                 aria-pressed={words.includes(w)}
@@ -321,19 +323,19 @@ function Activity({
                 onClick={() => toggle(w, words, setWords, scene.words.maxSelections)}
               >
                 {w}
-              </button>
+              </Button>
             ))}
           </div>
           {scene.words.allowCustom && (
             <div className="button-row">
-              <input
+              <Input
                 aria-label="Votre mot"
                 value={custom}
                 onChange={(e) => setCustom(e.target.value)}
                 maxLength={32}
                 placeholder="Votre mot"
               />
-              <button
+              <Button
                 type="button"
                 disabled={!custom.trim() || words.length >= scene.words.maxSelections}
                 onClick={() => {
@@ -342,29 +344,29 @@ function Activity({
                 }}
               >
                 Ajouter
-              </button>
+              </Button>
             </div>
           )}
           {words
             .filter((w) => !scene.words.options.includes(w))
             .map((w) => (
-              <button
+              <Button
                 className="chip selected"
                 type="button"
                 key={w}
                 onClick={() => setWords(words.filter((v) => v !== w))}
               >
                 {w} ×
-              </button>
+              </Button>
             ))}
         </fieldset>
-        <button className="primary full" disabled={!options.length || busy || !!pending}>
+        <Button className="primary full" disabled={!options.length || busy || !!pending}>
           {busy ? 'Envoi…' : pending ? 'En attente de connexion…' : fr.send}
           <span aria-hidden="true">→</span>
-        </button>
+        </Button>
       </form>
       {error && <Notice error>{error}</Notice>}
-    </section>
+    </Card>
   );
 }
 function Status({
@@ -379,11 +381,9 @@ function Status({
   detail?: string;
 }) {
   return (
-    <section className="status-card">
+    <Card as="section" className="status-card">
       <div className="status-art" aria-hidden="true">
-        <div>{symbol}</div>
-        <i />
-        <b />
+        {symbol === '✓' ? <Check /> : symbol === '◷' ? <Clock3 /> : <Radio />}
       </div>
       <div className="eyebrow">PALO ALTO · LA CLASSE EN DIRECT</div>
       <h1>{title}</h1>
@@ -392,6 +392,6 @@ function Status({
       <div className="status-dots" aria-hidden="true">
         ● ● ●
       </div>
-    </section>
+    </Card>
   );
 }

@@ -4,6 +4,8 @@ An audience interaction system for **ONLYOFFICE Desktop Editors Presentation Edi
 
 Built for an academic presentation with restrained Memphis geometry, French mobile screens, accessible controls, and readable projector results. Scenes are configurable; the included two Palo Alto scenes are examples, not a five-scene constraint.
 
+The refreshed interface uses free MIT-licensed Lumen controls, Unlumen's public counter primitive and self-hosted Manrope typography. See [UI design and licensing](docs/UI_DESIGN.md). For hosting off the laptop within free/trial allowances, [Railway is the selected provider](docs/RAILWAY.md).
+
 For the handoff, install/run commands, documentation map and verification boundary, read [Start here](docs/DELIVERY.md).
 
 ## Quick start — isolated local demo
@@ -130,5 +132,7 @@ data/                Private local databases and codes (ignored)
 | [Troubleshooting](docs/TROUBLESHOOTING.md)     | Practical fixes                               |
 | [Design decisions](docs/DESIGN_DECISIONS.md)   | Alternatives, tradeoffs and official research |
 | [Validation](docs/VALIDATION.md)               | Results and remaining manual checks           |
+| [Railway deployment](docs/RAILWAY.md)          | Selected Trial/Free hosting and setup         |
+| [UI design](docs/UI_DESIGN.md)                 | Free UI resources, tokens and accessibility   |
 
 Source is provided under AGPL-3.0; the unmodified ONLYOFFICE SDK retains its copyright header and additional license terms. See `LICENSE` and [third-party notices](docs/THIRD_PARTY.md). No real credentials are included.

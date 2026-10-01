@@ -46,3 +46,7 @@ Docker CLI was present but its Linux daemon was not running; no Docker image bui
 3. Open/close the large QR/results window, and test the workflow with fullscreen slides/video and a co-presenter's browser controller.
 4. Scan from one actual Android and iPhone, verify individual code, reconnect, vote, next scene and projector readability on the intended network.
 5. Confirm the real class import, private code distribution, retention policy, persistent disk and backup before inviting everyone.
+
+## Unlumen revision — 2026-10-01
+
+16 Node tests and 3 Playwright tests passed again after the UI revision. The browser flow additionally checks keyboard-operated result tabs and clipboard feedback. Responsive checks validate the actual 56 px plugin logo, square proportions and centered alignment at 320/390/760 px. The plugin harness runs at 360 px without horizontal overflow and confirms the same icon is decoded for slide PNG exports. Lint, strict typecheck, production build and compiled production smoke test passed. Railway deployment evidence is tracked in RAILWAY.md.

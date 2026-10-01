@@ -65,7 +65,24 @@ test('one login, realtime vote, word selections, results, reset and next scene',
   await expect(phone.getByRole('heading', { name: 'Le vote est terminé.' })).toBeVisible();
   await admin.getByRole('button', { name: 'Afficher les résultats', exact: true }).click();
   await admin.getByRole('button', { name: 'Afficher le QR code', exact: true }).click();
-  await admin.screenshot({ path: 'docs/screenshots/presenter.png', fullPage: true });
+  await admin.getByRole('tab', { name: 'Sondage', exact: true }).focus();
+  await admin.keyboard.press('ArrowRight');
+  await expect(admin.getByRole('tab', { name: 'Mots de la classe' })).toHaveAttribute(
+    'aria-selected',
+    'true',
+  );
+  await expect(admin.getByRole('tabpanel', { name: 'Mots de la classe' })).toContainText('Silence');
+  await admin.keyboard.press('ArrowLeft');
+  await expect(admin.getByRole('tab', { name: 'Sondage', exact: true })).toHaveAttribute(
+    'aria-selected',
+    'true',
+  );
+  await adminContext.grantPermissions(['clipboard-read', 'clipboard-write']);
+  await admin.getByRole('button', { name: 'Copier le lien de participation' }).click();
+  await expect(admin.getByRole('button', { name: 'Lien copié', exact: true })).toBeVisible();
+  expect(await admin.evaluate(() => navigator.clipboard.readText())).toContain('/?session=');
+  await admin.evaluate(() => window.scrollTo(0, 0));
+  await admin.screenshot({ path: 'docs/screenshots/presenter.png', fullPage: false });
   const projector = await adminContext.newPage();
   const href = await admin
     .getByRole('link', { name: 'Ouvrir l’écran de projection' })

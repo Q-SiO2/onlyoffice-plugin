@@ -1,6 +1,10 @@
 # Deployment
 
-## Recommended free classroom setup: laptop + LAN
+## Selected hosted setup: Railway Trial/Free
+
+The user requested hosting off the presentation laptop and confirmed **free/trial only**. The selected service for this implementation is **Railway**, running the complete app with one persistent volume. Follow [RAILWAY.md](RAILWAY.md) for the provider comparison, exact environment/service settings, private import, credit/expiry limits and deployment checklist. The plugin directory reports both Railway and Vercel installed, but live provider account tools were not exposed in this chat; no cloud deployment or paid resource is claimed.
+
+## Free fallback: laptop + LAN
 
 No hosting account is required. Use an existing trusted classroom router/hotspot that allows peer devices. Keep the laptop powered, disable sleep through your normal system settings, and rehearse Wi-Fi access before class.
 
@@ -36,7 +40,7 @@ docker compose cp path/to/class.csv app:/app/data/class.csv
 docker compose cp app:/app/data/access-codes.private.csv path/to/access-codes.private.csv
 ```
 
-The importer needs tsx. The production image installs runtime-only dependencies, so its command is provided as a bundled Node CLI: use `node dist/scripts/import-class.js` instead of `npm run import:class` inside the image:
+The source importer uses tsx. The production image installs runtime-only dependencies, so its command is provided as a bundled Node CLI: use `node dist/scripts/import-class.js` instead of `npm run import:class` inside the image:
 
 ```sh
 docker compose exec app node dist/scripts/import-class.js /app/data/class.csv /app/data/access-codes.private.csv

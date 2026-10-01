@@ -1,5 +1,6 @@
 import type { Aggregate } from '../../shared/model.ts';
-const palette = ['#6650cb', '#177f79', '#bd4b37'];
+import logo from '../../onlyoffice-plugin/icon@2x.png';
+const palette = ['#635baf', '#748598', '#a8894c'];
 function wrap(
   ctx: CanvasRenderingContext2D,
   text: string,
@@ -31,18 +32,21 @@ function wrap(
     );
   return Math.min(lines.length, maxLines) * lineHeight;
 }
-export function resultsPng(results: Aggregate, title: string, kind: 'poll' | 'words') {
+export async function resultsPng(results: Aggregate, title: string, kind: 'poll' | 'words') {
+  const icon = new Image();
+  icon.src = logo;
+  await icon.decode();
+  await document.fonts.ready;
   const canvas = document.createElement('canvas');
   canvas.width = 1600;
   canvas.height = 900;
   const ctx = canvas.getContext('2d')!;
-  ctx.fillStyle = '#f8f6ef';
+  ctx.fillStyle = '#f6f6f8';
   ctx.fillRect(0, 0, 1600, 900);
-  ctx.fillStyle = '#6650cb';
-  ctx.fillRect(70, 58, 12, 42);
+  ctx.drawImage(icon, 60, 52, 48, 48);
   ctx.fillStyle = '#242744';
   ctx.font = 'bold 26px Arial';
-  ctx.fillText('PALO ALTO LIVE', 105, 88);
+  ctx.fillText('PALO ALTO LIVE', 124, 88);
   ctx.textAlign = 'right';
   ctx.font = '24px Arial';
   ctx.fillText(`${results.total} participations`, 1530, 88);
@@ -61,7 +65,7 @@ export function resultsPng(results: Aggregate, title: string, kind: 'poll' | 'wo
       ctx.font = '24px Arial';
       ctx.fillText(`${p.count} votes · ${p.percentage} %`, 1530, y);
       ctx.textAlign = 'left';
-      ctx.fillStyle = '#e7e4ef';
+      ctx.fillStyle = '#eae8f2';
       ctx.fillRect(70, y + 12, 1460, Math.min(32, rowHeight - 34));
       ctx.fillStyle = palette[i % 3];
       ctx.fillRect(70, y + 12, (1460 * p.percentage) / 100, Math.min(32, rowHeight - 34));

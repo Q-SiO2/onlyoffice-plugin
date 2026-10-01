@@ -42,14 +42,14 @@ The final package should be reinstalled even if the earlier validation copy is a
 
 An npm-workspace TypeScript project uses React/Vite for phones and presenter screens, Express/Socket.IO for commands and live updates, and SQLite WAL for persistent records. A locally bundled official ONLYOFFICE SDK bridges the same presenter dashboard to documented plugin windows and image insertion APIs.
 
-Implemented: one QR/login across scenes; Moroccan whitelist normalization plus private individual code; expiring sessions; duplicate-vote prevention; configurable single/multiple-choice polls and word choices; frequency-sized clouds; all presenter states and counters; reset confirmations; reconnect snapshots and offline vote retry; anonymous CSV; PNG results and QR; CSV whitelist import; retention/deletion; isolated demo and simulator. UI defaults to French with a restrained Memphis visual style. JSON config supports 1–100 scenes.
+Implemented: one QR/login across scenes; Moroccan whitelist normalization plus private individual code; expiring sessions; duplicate-vote prevention; configurable single/multiple-choice polls and word choices; frequency-sized clouds; all presenter states and counters; reset confirmations; reconnect snapshots and offline vote retry; anonymous CSV; PNG results and QR; CSV whitelist import; retention/deletion; isolated demo and simulator. UI defaults to French and uses actual free Unlumen primitives, the exact plugin logo, navy/gold branding and aligned SVG icons. JSON config supports 1–100 scenes.
 
 Phones are stored as keyed hashes; personal codes use scrypt; audience displays contain only aggregate results. No admin secret is included in frontend bundles. The system does not query WhatsApp or send messages.
 
 ## Verification evidence
 
 - 16 Node tests passed, including phone rules, authorization, unique/idempotent voting, invalid inputs, state/reset safety, privacy, persistence, concurrent realtime clients and actual CSV import CLI.
-- Two Playwright tests passed: the full phone/presenter classroom flow and built plugin bundle loaded through `file://` with a mocked Office host.
+- Three Playwright tests passed: classroom flow including Unlumen tabs and clipboard, the built file-origin plugin at 360 px, and responsive/reduced-motion checks with logo alignment.
 - Lint, strict typecheck, formatting, production build and plugin packaging passed.
 - Compiled production server and compiled import CLI passed a smoke test covering static routes/CSP, login, vote and public results.
 - Both 30- and 100-client real Socket.IO simulations passed.
@@ -64,7 +64,7 @@ The plugin appeared and loaded in the native ONLYOFFICE sidebar. The user stoppe
 
 Scenes and voting are manual. No dependable embedded-video-end hook was found in the official event documentation. Use the presenter/co-presenter controls after playback. Static slide images do not refresh automatically. Custom text is optional and has no moderation service; visible clouds show the top 24 words, while CSV retains all frequencies.
 
-The delivered backend is one long-running Node service with a persistent SQLite disk. Free operation is on the classroom LAN; public deployment needs a reachable HTTPS host and persistent storage. Docker/Compose, Render and Caddy templates are provided, but no public deployment was made. Docker's daemon was unavailable, so a container build/run was not verified. This is not a ready Supabase/Firebase/serverless adapter.
+The delivered backend is one long-running Node service with a persistent SQLite disk. Railway Trial/Free is selected for public hosting; account credit and persistent storage are required. The classroom LAN remains a fallback. Docker/Compose, Render and Caddy templates are provided, but no public deployment was made. Docker's daemon was unavailable, so a container build/run was not verified. This is not a ready Supabase/Firebase/serverless adapter.
 
 For a real class: set two distinct strong secrets in `.env`, set the reachable `PUBLIC_URL` and exact origins, import your own CSV, distribute generated access codes privately, choose persistent hosting/backups, and complete the native/device rehearsal. The import preserves the class list until an administrator explicitly replaces/deletes it; finished sessions have documented 30-day retention.
 
@@ -90,4 +90,4 @@ All documents are inside `docs/` in the project/ZIP. `README.md` is the main lin
 | `VALIDATION.md`        | Executed checks and remaining manual verification   |
 | `THIRD_PARTY.md`       | SDK provenance and license notices                  |
 
-Screenshots are in `docs/screenshots/`. Deployment templates are `Dockerfile`, `compose.yaml`, `render.yaml` and `deploy/Caddyfile.example`. Root `LICENSE` and SDK notices describe AGPL licensing.
+See `RAILWAY.md` for hosting and `UI_DESIGN.md` for exact free primitive provenance. Screenshots are in `docs/screenshots/`. Deployment templates are `Dockerfile`, `compose.yaml`, `render.yaml` and `deploy/Caddyfile.example`. Root `LICENSE` and SDK notices describe AGPL licensing.

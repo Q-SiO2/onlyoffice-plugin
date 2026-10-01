@@ -1,10 +1,11 @@
 :root {
-  --paper: #f8f6ef;
-  --ink: #242744;
-  --muted: #64657a;
-  --line: #e2dfeb;
-  --purple: #6650cb;
-  --teal: #177f79;
-  --coral: #cf674f;
+  --paper: #f6f6f8;
+  --pa-ink: #242744;
+  --muted: #747687;
+  --pa-line: #e6e6ec;
+  --purple: #635baf;
+  --teal: #242744;
+  --coral: #b07865;
   --yellow: #edc75c;
+  --font-sans: 'Manrope Variable', 'Segoe UI', sans-serif;
 }

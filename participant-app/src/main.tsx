@@ -1,15 +1,26 @@
 import { createRoot } from 'react-dom/client';
+import { lazy, Suspense } from 'react';
 import { Participant } from './Participant.tsx';
-import { Presenter } from './Presenter.tsx';
-import { Display } from './Display.tsx';
 import './styles.css';
+const Presenter = lazy(() =>
+  import('./Presenter.tsx').then((module) => ({ default: module.Presenter })),
+);
+const Display = lazy(() => import('./Display.tsx').then((module) => ({ default: module.Display })));
 const session = new URLSearchParams(location.search).get('session') || '';
 createRoot(document.getElementById('root')!).render(
-  location.pathname === '/presenter' ? (
-    <Presenter />
-  ) : location.pathname === '/display' ? (
-    <Display session={session} />
-  ) : (
-    <Participant />
-  ),
+  <Suspense
+    fallback={
+      <div className="notice" role="status">
+        Chargement de la présentation…
+      </div>
+    }
+  >
+    {location.pathname === '/presenter' ? (
+      <Presenter />
+    ) : location.pathname === '/display' ? (
+      <Display session={session} />
+    ) : (
+      <Participant />
+    )}
+  </Suspense>,
 );

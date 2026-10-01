@@ -31,10 +31,14 @@ await build({
   platform: 'browser',
   format: 'iife',
   target: 'chrome100',
+  loader: { '.woff2': 'file', '.woff': 'file', '.png': 'dataurl' },
+  assetNames: 'assets/[name]-[hash]',
   minify: true,
   define: { 'process.env.NODE_ENV': '"production"' },
 });
 for (const name of ['index.html', 'window.html', 'config.json', 'icon.png', 'icon@2x.png'])
   await copyFile(`onlyoffice-plugin/${name}`, `onlyoffice-plugin/dist/${name}`);
 await cp('onlyoffice-plugin/vendor', 'onlyoffice-plugin/dist/vendor', { recursive: true });
+await cp('docs/licenses', 'onlyoffice-plugin/dist/vendor/licenses', { recursive: true });
+await cp('docs/licenses', 'dist/client/licenses', { recursive: true });
 console.log('Built backend, participant/presenter web app, and self-contained ONLYOFFICE plugin.');
