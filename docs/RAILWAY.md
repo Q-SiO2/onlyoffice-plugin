@@ -1,6 +1,6 @@
 # Railway deployment — free/trial only
 
-Selected on **2026-10-01** for the current React + Express + Socket.IO + SQLite architecture. This is a deployment runbook, not confirmation of a live deployment.
+Deployed and verified on **2026-10-01** for the current React + Express + Socket.IO + SQLite architecture.
 
 ## Choice and budget
 
@@ -19,7 +19,19 @@ Official sources: [pricing](https://railway.com/pricing), [plan resources](https
 
 ## Account/tool status
 
-Railway was reconnected. The user confirmed active free trial credit and selected Q-SiO2/onlyoffice-plugin (main). Existing service onlyoffice-plugin in project appealing-charisma is being configured with a 0.5 GB persistent volume, one replica, 1 vCPU and 0.5 GB RAM in Amsterdam. Production mode uses generated secrets and starts with an empty whitelist; no real student data has been uploaded. This section is updated after live deployment verification.
+Railway was reconnected. The user confirmed active free trial credit. The dashboard shows Trial; no paid plan or billing upgrade was selected.
+
+- Repository: [Q-SiO2/onlyoffice-plugin](https://github.com/Q-SiO2/onlyoffice-plugin), branch `main`.
+- Project: `appealing-charisma`; service: `paloalto-live`; environment: `production`.
+- Participant URL: <https://paloalto-live-production.up.railway.app>.
+- Presenter URL: <https://paloalto-live-production.up.railway.app/presenter>.
+- One replica in US West (California), with `paloalto-live-volume` attached at `/app/data`, **500 MB**. Volume ID: `53652360-3107-423f-b09e-ec5b65ac6f71`.
+- Successful deployment: `d4af48ea-8645-45af-b3b7-bdea80bcd930`, building UI commit `ccdf931` with the root Dockerfile. Runtime logs confirm the volume mounted and the API started in production mode.
+- HTTPS `/api/health` returns `ok: true`, `demo: false`; public state reports the correct HTTPS join URL. Live browser inspection passed without console errors.
+
+CPU/memory use the account's Trial defaults (dashboard maximum 2 vCPU / 1 GB); custom lower caps were unavailable on this account. These are maximum resources, not measured consumption. The earlier requested Amsterdam/512 MB settings did not apply. The actual settings above were read back after deployment.
+
+Generated `ADMIN_KEY` and `PHONE_HASH_SECRET` are stored in Railway Variables. Reveal/copy `ADMIN_KEY` there to log into the presenter or plugin; it is never included in the repository or downloads. Production has an **empty whitelist**. Import the real class using the workflow below before inviting participants. No real student data has been uploaded. Cloud record survival across a further restart and native phone/editor rehearsal remain checks to perform with the imported class; the mounted disk and production startup have been verified.
 
 ## Service setup
 

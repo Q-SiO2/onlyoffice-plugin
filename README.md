@@ -4,7 +4,7 @@ An audience interaction system for **ONLYOFFICE Desktop Editors Presentation Edi
 
 Built for an academic presentation with restrained Memphis geometry, French mobile screens, accessible controls, and readable projector results. Scenes are configurable; the included two Palo Alto scenes are examples, not a five-scene constraint.
 
-The refreshed interface uses free MIT-licensed Lumen controls, Unlumen's public counter primitive and self-hosted Manrope typography. See [UI design and licensing](docs/UI_DESIGN.md). For hosting off the laptop within free/trial allowances, [Railway is the selected provider](docs/RAILWAY.md).
+The interface uses free MIT-licensed Unlumen Button, Tabs, Highlight, Glowing Badge, Copy and Count Up primitives, the exact plugin icon, and self-hosted Manrope typography. See [UI design and licensing](docs/UI_DESIGN.md). For hosting off the laptop within free/trial allowances, [Railway is the selected provider](docs/RAILWAY.md).
 
 For the handoff, install/run commands, documentation map and verification boundary, read [Start here](docs/DELIVERY.md).
 

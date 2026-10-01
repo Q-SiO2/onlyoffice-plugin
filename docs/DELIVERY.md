@@ -8,7 +8,13 @@ C:\Users\Q\Documents\Codex\2026-10-01\files-pasted-by-the-user-you\codingproject
 
 The delivery includes `paloalto-live-project.zip` (portable source, lockfile, documentation and compiled builds) and `paloalto-live.plugin` (installable ONLYOFFICE plugin). The working repository retains its local Git history. Archives exclude `.env`, databases, private codes, dependencies and test traces. If extracting the ZIP elsewhere, use that extracted `paloalto-live` directory in the commands below.
 
-## Run the isolated demo
+## Use the live deployment
+
+The platform is deployed at <https://paloalto-live-production.up.railway.app>. Open <https://paloalto-live-production.up.railway.app/presenter> to control it. In Railway, open project **appealing-charisma**, service **paloalto-live**, **Variables** and reveal/copy `ADMIN_KEY` for presenter/plugin login. Do not share that key with participants.
+
+Railway remains on the active Trial allowance. A 500 MB persistent volume is mounted at `/app/data`; the Docker build, mounted startup and HTTPS health check passed. The class whitelist is empty, so import your class and distribute personal codes before presenting. See `docs/RAILWAY.md` for the protected import workflow and credit/expiry checks.
+
+## Run the isolated demo locally
 
 Install Node.js 24 or later if needed, then run in PowerShell:
 
@@ -33,7 +39,7 @@ This resets the current demo scene, opens voting, connects clients, saves votes/
 1. Open a presentation in ONLYOFFICE Desktop Editors (manifest minimum 8.3; plugin loading checked on installed 9.3.1.8).
 2. Open **Plugins → Plugin Manager → My plugins → Install plugin manually**.
 3. Select the delivered `paloalto-live.plugin` file, or `dist/paloalto-live.plugin` inside the project.
-4. Open **Plugins → Palo Alto Live**. Enter backend address `http://localhost:3000` and presenter key `demo-presenter` for the local demo.
+4. Open **Plugins → Palo Alto Live**. For the hosted platform, enter `https://paloalto-live-production.up.railway.app` and the `ADMIN_KEY` from Railway Variables. For the local demo, use `http://localhost:3000` and `demo-presenter`.
 5. Select a blank slide in edit mode to insert result/QR PNGs. Images are added without removing existing objects. Inserted images are snapshots; use the large results window or browser projector for live updates.
 
 The final package should be reinstalled even if the earlier validation copy is already present. See `docs/ONLYOFFICE_PLUGIN.md` for the per-user folder alternative and debugging.
@@ -64,9 +70,9 @@ The plugin appeared and loaded in the native ONLYOFFICE sidebar. The user stoppe
 
 Scenes and voting are manual. No dependable embedded-video-end hook was found in the official event documentation. Use the presenter/co-presenter controls after playback. Static slide images do not refresh automatically. Custom text is optional and has no moderation service; visible clouds show the top 24 words, while CSV retains all frequencies.
 
-The delivered backend is one long-running Node service with a persistent SQLite disk. Railway Trial/Free is selected for public hosting; account credit and persistent storage are required. The classroom LAN remains a fallback. Docker/Compose, Render and Caddy templates are provided, but no public deployment was made. Docker's daemon was unavailable, so a container build/run was not verified. This is not a ready Supabase/Firebase/serverless adapter.
+The delivered backend runs as one Node service on Railway with a mounted SQLite disk. Railway built the Docker image and successfully started it in production mode. Trial credit and expiry limit hosting availability; check both before class. The classroom LAN remains a fallback. Compose, Render and Caddy configurations remain alternative templates.
 
-For a real class: set two distinct strong secrets in `.env`, set the reachable `PUBLIC_URL` and exact origins, import your own CSV, distribute generated access codes privately, choose persistent hosting/backups, and complete the native/device rehearsal. The import preserves the class list until an administrator explicitly replaces/deletes it; finished sessions have documented 30-day retention.
+For a real class on the hosted service: import your own CSV into its mounted database, distribute generated access codes privately, back up/export results, and complete the native/device rehearsal. Railway already holds generated distinct secrets, the HTTPS URL and allowed origins. The import preserves the class list until an administrator explicitly replaces/deletes it; finished sessions have documented 30-day retention.
 
 ## Documentation map
 
