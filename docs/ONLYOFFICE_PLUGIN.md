@@ -39,6 +39,12 @@ The current [official AI networking guide](https://api.onlyoffice.com/docs/ai/gu
 
 Use HTTPS for public servers. No administrative key appears in packaged files. The presenter types it once; the dashboard uses a short-lived token in memory. Backend URL alone is saved in localStorage.
 
+## Sidebar scrolling and installed update
+
+Plugin **1.0.1** includes a viewport-height, independently scrolling `#root` region. Mouse-wheel and keyboard scrolling work even when the editor host disables body/document scrolling. Focus the panel and use Ctrl+Home/Ctrl+End to reach its beginning/end. The narrow-panel harness verifies both at 360 × 420.
+
+On 2026-10-01, the old local GUID-folder installation was backed up under the checkout's private `work/` directory and replaced while ONLYOFFICE was closed. All 20 installed build files were hash-verified against the new build. Reopen ONLYOFFICE and **Plugins → Palo Alto Live** to load it. The website deployment does not update a locally installed plugin; future releases need installation/replacement too.
+
 ## Slide interaction
 
 The current slide is accessed inside documented `Asc.plugin.callCommand` using `Api.GetPresentation().GetCurrentSlide()`. Results are generated as 1600×900 PNGs; QR images are square. The bridge passes Base64 image data and its ratio through `Asc.scope`, computes an aspect-preserving size in EMU from `GetWidth`/`GetHeight`, creates the image with `Api.CreateImage`, centers it, and calls `slide.AddObject`.

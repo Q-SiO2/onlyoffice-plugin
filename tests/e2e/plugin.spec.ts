@@ -6,10 +6,11 @@ import { unzipSync } from 'fflate';
 test('packaged plugin connects, opens QR window and serializes additive image insertion', async ({
   page,
 }) => {
-  await page.setViewportSize({ width: 360, height: 850 });
+  await page.setViewportSize({ width: 360, height: 420 });
   const archive = unzipSync(await readFile('dist/paloalto-live.plugin'));
   const manifest = JSON.parse(new TextDecoder().decode(archive['config.json']));
   expect(manifest.variations[0].type).toBe('panelRight');
+  expect(manifest.version).toBe('1.0.1');
   expect(manifest.variations[0].EditorsSupport).toEqual(['slide']);
   for (const file of [
     'index.html',
@@ -79,7 +80,7 @@ test('packaged plugin connects, opens QR window and serializes additive image in
   const jsUrl = pathToFileURL(resolve('onlyoffice-plugin/dist/app.js')).href;
   await writeFile(
     'work/plugin-harness.html',
-    `<!doctype html><html lang="fr"><head><meta charset="utf-8"><link rel="stylesheet" href="${cssUrl}"></head><body><div id="root"></div><script src="${jsUrl}"></script><script>Asc.plugin.init();</script></body></html>`,
+    `<!doctype html><html lang="fr" class="paloalto-plugin" style="overflow:hidden"><head><meta charset="utf-8"><link rel="stylesheet" href="${cssUrl}"></head><body style="overflow:hidden"><div id="root" role="region" aria-label="Panneau Palo Alto Live" tabindex="0"></div><script src="${jsUrl}"></script><script>Asc.plugin.init();</script></body></html>`,
   );
   // Exercise the legacy file:// / Origin:null networking path in a real browser context.
   await page.goto(pathToFileURL(resolve('work/plugin-harness.html')).href);
@@ -87,6 +88,19 @@ test('packaged plugin connects, opens QR window and serializes additive image in
   await page.getByLabel('Clé présentateur').fill('demo-presenter');
   await page.getByRole('button', { name: 'Ouvrir le tableau de bord' }).click();
   await expect(page.getByRole('button', { name: 'Se déconnecter', exact: true })).toBeVisible();
+  // The editor host can lock body/document scrolling. Wheel and keyboard must scroll our panel.
+  await page.mouse.move(180, 300);
+  await page.mouse.wheel(0, 1200);
+  await expect.poll(() => page.locator('#root').evaluate((el) => el.scrollTop)).toBeGreaterThan(0);
+  expect(await page.evaluate(() => document.scrollingElement!.scrollTop)).toBe(0);
+  await page.locator('#root').focus();
+  await page.keyboard.press('Control+End');
+  await expect
+    .poll(() =>
+      page.locator('#root').evaluate((el) => el.scrollHeight - el.clientHeight - el.scrollTop),
+    )
+    .toBeLessThan(2);
+  await page.screenshot({ path: 'docs/screenshots/plugin-scroll-bottom.png', fullPage: false });
   await page.getByRole('button', { name: 'QR code en grande fenêtre' }).click();
   const windowConfig = (await page.evaluate(
     () => Reflect.get(window, '__pluginTest').windows[0],
@@ -124,5 +138,7 @@ test('packaged plugin connects, opens QR window and serializes additive image in
     .toBe(3);
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
   await expect(page.locator('.brand-icon')).toHaveJSProperty('naturalWidth', 56);
-  await page.screenshot({ path: 'docs/screenshots/plugin-harness.png', fullPage: true });
+  await page.locator('#root').focus();
+  await page.keyboard.press('Control+Home');
+  await page.screenshot({ path: 'docs/screenshots/plugin-harness.png', fullPage: false });
 });

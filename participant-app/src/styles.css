@@ -1245,6 +1245,24 @@ legend {
     font-size: 9px;
   }
 }
+.paloalto-plugin,
+.paloalto-plugin body {
+  height: 100%;
+  overflow: hidden;
+}
+.paloalto-plugin #root {
+  height: 100vh;
+  height: 100dvh;
+  overflow-x: hidden;
+  overflow-y: auto;
+  scrollbar-gutter: stable;
+  overscroll-behavior-y: contain;
+  scroll-padding: 16px;
+}
+.paloalto-plugin #root:focus-visible {
+  outline: 2px solid var(--pa-ink);
+  outline-offset: -2px;
+}
 .plugin-shell .presenter-header {
   padding: 14px 16px;
   flex-wrap: wrap;

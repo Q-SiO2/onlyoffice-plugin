@@ -33,7 +33,7 @@ The first connection attempt failed due to the legacy file:// origin being absen
 
 **The user stopped Computer Use with Escape before the corrected native connection and actual slide-image insertion could be retested.** Desktop automation was stopped. Do not label those two native checks as passed. Native PluginWindow behavior during fullscreen slideshow and actual iPhone/Android/classroom Wi-Fi behavior also remain a rehearsal requirement.
 
-The installed local plugin copy may precede final source refinements; install the final `dist/paloalto-live.plugin` to use the delivered build. It was not silently overwritten after the user's stop.
+After the user's subsequent report that the installed plugin was stale and would not scroll, its GUID-folder copy was backed up and updated to 1.0.1 while ONLYOFFICE was closed. All 20 installed build files match the new build by SHA-256. The packaged file-origin harness passes wheel and Ctrl+End scrolling at 360 × 420 with document/body scrolling disabled. Native loading of this revision and slide insertion still require reopening/rehearsal; the earlier native coverage above refers to the initial installation.
 
 ## Railway infrastructure verification
 

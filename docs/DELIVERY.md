@@ -42,7 +42,7 @@ This resets the current demo scene, opens voting, connects clients, saves votes/
 4. Open **Plugins → Palo Alto Live**. For the hosted platform, enter `https://paloalto-live-production.up.railway.app` and the `ADMIN_KEY` from Railway Variables. For the local demo, use `http://localhost:3000` and `demo-presenter`.
 5. Select a blank slide in edit mode to insert result/QR PNGs. Images are added without removing existing objects. Inserted images are snapshots; use the large results window or browser projector for live updates.
 
-The final package should be reinstalled even if the earlier validation copy is already present. See `docs/ONLYOFFICE_PLUGIN.md` for the per-user folder alternative and debugging.
+Plugin 1.0.1 is already installed on this computer: the stale GUID-folder copy was backed up and replaced while ONLYOFFICE was closed, and all 20 installed build files were hash-verified. Reopen ONLYOFFICE to load the new interface and scrolling panel. On another computer, install the delivered archive. See `docs/ONLYOFFICE_PLUGIN.md` for the per-user folder alternative and debugging.
 
 ## Architecture and completed functionality
 
