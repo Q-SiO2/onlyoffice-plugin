@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { mkdir } from 'node:fs/promises';
+import { mkdir, readFile } from 'node:fs/promises';
 test('one login, realtime vote, word selections, results, reset and next scene', async ({
   browser,
 }) => {
@@ -11,6 +11,16 @@ test('one login, realtime vote, word selections, results, reset and next scene',
   });
   const admin = await adminContext.newPage(),
     phone = await phoneContext.newPage();
+  await admin.route('**/presenter', async (route) => {
+    const response = await route.fetch();
+    await route.fulfill({
+      response,
+      headers: {
+        ...response.headers(),
+        'content-security-policy': "connect-src 'self' ws: wss:; img-src 'self' data: blob:;",
+      },
+    });
+  });
   const consoleErrors: string[] = [];
   phone.on('pageerror', (e) => consoleErrors.push(e.message));
   admin.on('pageerror', (e) => consoleErrors.push(e.message));
@@ -90,6 +100,42 @@ test('one login, realtime vote, word selections, results, reset and next scene',
   await projector.goto(href!);
   await expect(projector.getByText('1 vote · 100 %', { exact: true })).toBeVisible();
   await projector.screenshot({ path: 'docs/screenshots/projector.png', fullPage: true });
+  // Export real PNG downloads: transparent assets for styled slides, optional branded full frame.
+  async function pngDownload(button: string) {
+    const pending = admin.waitForEvent('download');
+    await admin.getByRole('button', { name: button, exact: true }).click();
+    const file = await pending;
+    const src =
+      'data:image/png;base64,' + (await readFile((await file.path())!)).toString('base64');
+    return admin.evaluate(async (url) => {
+      const image = new Image();
+      image.src = url;
+      await image.decode();
+      const canvas = document.createElement('canvas');
+      canvas.width = image.width;
+      canvas.height = image.height;
+      const ctx = canvas.getContext('2d')!;
+      ctx.drawImage(image, 0, 0);
+      return {
+        width: image.width,
+        height: image.height,
+        alpha: ctx.getImageData(0, 0, 1, 1).data[3],
+      };
+    }, src);
+  }
+  const asset = await pngDownload('Télécharger le sondage');
+  expect(asset.width).toBe(1600);
+  expect(asset.height).toBeLessThan(900);
+  expect(asset.alpha).toBe(0);
+  const wordsAsset = await pngDownload('Télécharger le nuage');
+  expect(wordsAsset.height).toBeLessThan(900);
+  expect(wordsAsset.alpha).toBe(0);
+  await admin.getByLabel('Graphiques transparents pour vos diapositives').uncheck();
+  expect(await pngDownload('Télécharger le sondage')).toEqual({
+    width: 1600,
+    height: 900,
+    alpha: 255,
+  });
   const csvPromise = admin.waitForEvent('download');
   await admin.getByRole('button', { name: 'Exporter les résultats CSV' }).click();
   expect((await csvPromise).suggestedFilename()).toBe('paloalto-results.csv');

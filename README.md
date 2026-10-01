@@ -1,6 +1,6 @@
 # Palo Alto Live
 
-An audience interaction system for **ONLYOFFICE Desktop Editors Presentation Editor**. Students scan one QR code, sign in once with their Moroccan mobile number and personal class code, and stay on the same page through every scene. The presenter controls voting, anonymous results, and word clouds from a right sidebar plugin or the matching browser dashboard.
+An audience interaction system for **ONLYOFFICE Desktop Editors Presentation Editor**. Students scan one QR code, sign in once with their Moroccan mobile number and personal class code, and stay on the same page through every scene. The website controls sessions, scenes, voting and publication. The editor plugin is a read-only asset tray: add transparent poll/word graphics and a QR, then drag and resize them on your own slides. Published results refresh linked graphics while the plugin is open and connected.
 
 Built for an academic presentation with restrained Memphis geometry, French mobile screens, accessible controls, and readable projector results. Scenes are configurable; the included two Palo Alto scenes are examples, not a five-scene constraint.
 
@@ -10,7 +10,7 @@ For the handoff, install/run commands, documentation map and verification bounda
 
 ## Quick start — isolated local demo
 
-Requires **Node.js 24+**, npm, and a modern browser. ONLYOFFICE 8.3+ is required only for the editor integration (live load checked on 9.3.1.8).
+Requires **Node.js 24+**, npm, and a modern browser. ONLYOFFICE 9.3+ is required for linked graphics. 9.3.1.8 is installed in this environment; native insertion/refresh requires rehearsal.
 
 ```powershell
 cd codingprojects/paloalto-live
@@ -26,7 +26,7 @@ npm run demo
 
 ## Features
 
-Persistent SQLite sessions; Socket.IO updates with fresh reconnect snapshots; server-side authorization; hashed phones and personal codes; one vote per participant per scene; idempotent network retries; configurable single/multiple-choice polls; bounded predefined or custom words; frequency-sized word cloud; counters; confirmed resets; anonymous CSV export; QR generation; 1600×900 result PNGs; non-destructive current-slide insertion; large plugin windows; a public aggregate projector screen.
+Persistent SQLite sessions; Socket.IO updates with fresh reconnect snapshots; server-side authorization; hashed phones and personal codes; one vote per participant per scene; idempotent network retries; configurable single/multiple-choice polls; bounded predefined or custom words; frequency-sized word cloud; counters; confirmed resets; anonymous CSV export; QR generation; transparent PNG assets or full 1600×900 result exports; additive linked slide graphics with automatic picture updates; a public aggregate projector screen.
 
 ![Participant voting](docs/screenshots/mobile-vote.png)
 ![Presenter dashboard](docs/screenshots/presenter.png)
@@ -35,12 +35,13 @@ Persistent SQLite sessions; Socket.IO updates with fresh reconnect snapshots; se
 
 ```mermaid
 flowchart LR
-  O[ONLYOFFICE plugin / browser presenter] -->|Authenticated HTTP commands| B[Node + Express]
+  O[Browser administration dashboard] -->|Authenticated HTTP commands| B[Node + Express]
+  E[ONLYOFFICE asset tray] -->|Public read-only state| B
   P[Phones] -->|Whitelist + code / votes| B
   B --> D[(SQLite WAL)]
   B -->|Socket.IO role-specific snapshots| O
   B -->|Socket.IO current scene + own status| P
-  B -->|Public aggregates when RESULTS| R[Projector / large plugin window]
+  B -->|Public aggregates when RESULTS| R[Projector / linked slide graphics]
 ```
 
 The production backend serves the compiled web app on the same origin. No Supabase account, Firebase project, Vercel account, SMS provider, or cloud secret is needed. The free classroom option is a laptop on the class LAN. Hosted deployments need a long-running Node instance with persistent disk; see deployment documentation.
@@ -77,8 +78,9 @@ npm run package:plugin
 1. Open a presentation in ONLYOFFICE Desktop Editors.
 2. Choose **Plugins → Plugin Manager → My plugins → Install plugin manually**.
 3. Select `dist/paloalto-live.plugin`.
-4. Choose **Plugins → Palo Alto Live**. In the sidebar enter the backend address (demo: `http://localhost:3000`) and presenter key.
-5. Select a slide in edit mode before using insertion buttons. Existing objects are preserved. Use a blank results slide and undo with `Ctrl+Z` if needed.
+4. Choose **Plugins → Palo Alto Live**. Paste your public participation link or site address (demo: `http://localhost:5173`) and choose **Charger les graphiques**. No admin key is needed here.
+5. Activate a scene on `/presenter`. Select a slide in edit mode, add its poll, word cloud or QR, then drag/resize the selected graphic with native ONLYOFFICE handles.
+6. Keep the plugin open and connected. Publishing/hiding/resetting updates the active scene's linked graphics without changing geometry. Keep them ungrouped and their object names intact. Other scenes keep their last picture until activated again. Downloaded PNGs and older plugin images remain snapshots.
 
 This workspace's plugin was also installed through the official per-user plugin folder for local validation. The `.plugin` archive contains `config.json` at its root and bundles the SDK locally for use without a CDN.
 

@@ -26,17 +26,17 @@ Reviewed official sources on **2026-10-01**. API availability is checked against
 
 **Decision:** `type=panelRight`, Presentation Editor only, official SDK and PluginWindow, no DOM interaction with editor internals.
 
-**Reason:** [current configuration](https://api.onlyoffice.com/docs/plugins/configuration/) deprecates legacy mode flags in favor of type; a persistent sidebar suits presenter controls. The shared React dashboard also runs in a browser for a co-presenter.
+**Reason:** [current configuration](https://api.onlyoffice.com/docs/plugins/configuration/) deprecates legacy mode flags in favor of type; the sidebar provides a read-only graphic tray. Session/voting controls run on the browser dashboard for the presenter or co-presenter.
 
-**Tradeoff:** plugin sidebar visibility during full-screen slideshow is an operational limit. A browser controller is the reliable backup. Minimum manifest version 8.3; no unsupported version promises. SDK snapshot is bundled for LAN reliability and retains its original license.
+**Tradeoff:** plugin sidebar visibility during full-screen slideshow is an operational limit. A browser controller is the reliable backup. Minimum manifest version 9.3 for persistent graphic names; no unsupported version promises. SDK snapshot is bundled for LAN reliability and retains its original license.
 
-## 4. Additive current-slide PNG insertion
+## 4. Transparent linked slide graphics
 
-**Decision:** render bars/words to PNG and use `GetCurrentSlide`, `CreateImage`, `SetPosition`, `AddObject` inside `callCommand`, passing data via `Asc.scope`. Use 90% aspect-fit bounds and never remove objects.
+**Decision:** render transparent bars/words to PNG and create a borderless rectangle using `GetCurrentSlide`, `CreateShape`, `CreateBlipFill`, `SetPosition`, `AddObject` and `Select` inside `callCommand`. Fit within 48% slide width/60% height. Unique names bind graphics to site origin/scene/kind; replace only their fill using `SetFill` when public state changes. Commands run in a queue to protect shared `Asc.scope`.
 
-**Reason:** official [CreateImage](https://api.onlyoffice.com/docs/office-api/usage-api/presentation-api/Api/Methods/CreateImage/) supports Base64 sources. Static snapshots can be saved in the presentation, with no chart embed/remote-image fetch dependency. [Command scope](https://api.onlyoffice.com/docs/plugins/interacting-with-editors/overview/how-to-call-commands/) prevents accidental imported closures.
+**Reason:** official [CreateBlipFill](https://api.onlyoffice.com/docs/office-api/usage-api/presentation-api/Api/Methods/CreateBlipFill/) supports Base64 sources and [SetFill](https://api.onlyoffice.com/docs/office-api/usage-api/presentation-api/ApiShape/Methods/SetFill/) updates a shape's picture without replacing its geometry. The current picture is saved in the deck. [Command scope](https://api.onlyoffice.com/docs/plugins/interacting-with-editors/overview/how-to-call-commands/) prevents accidental imported closures.
 
-**Tradeoff:** snapshots do not update automatically. Reinserting adds an image; the presenter chooses a blank slide or repositions normally. No dedicated slide is destroyed or overwritten, and undo is available.
+**Tradeoff:** the plugin must remain open/connected. Active-scene assets update; other scenes retain their picture until activated again. Keep linked shapes ungrouped and names intact. PNG downloads/older images remain snapshots. Add the asset, then move/resize with native handles; direct external drag from the iframe to the canvas is not implemented. Native refresh during fullscreen still needs rehearsal.
 
 ## 5. Manual scenes and videos
 

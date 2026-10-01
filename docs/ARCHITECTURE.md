@@ -3,14 +3,14 @@
 ```mermaid
 flowchart TB
   Plugin[Desktop Presentation Editor / React plugin sidebar]
-  Presenter[Browser presenter fallback]
+  Presenter[Browser administration dashboard]
   Phone[Mobile React page]
   Display[Public projector / PluginWindow]
   API[Express HTTP authorization + command handlers]
   RT[Socket.IO authenticated connections]
   DB[(SQLite WAL + foreign keys)]
   Config[shared/scenes.json validated with Zod]
-  Plugin -->|Bearer presenter session| API
+  Plugin -->|Public read-only state| API
   Presenter -->|Bearer presenter session| API
   Phone -->|Phone + code once; then bearer token| API
   API -->|Transactional mutations| DB
@@ -18,14 +18,16 @@ flowchart TB
   API -->|Notify after commit| RT
   DB -->|Current state and aggregates| RT
   RT -->|Role-specific snapshots| Plugin & Presenter & Phone & Display
-  Plugin -->|callCommand / Api.CreateImage| Slide[Current slide: additive PNG]
+  Plugin -->|callCommand / CreateShape / SetFill| Slide[Linked transparent graphics]
 ```
 
 ## Component responsibilities
 
 `backend/src/store.ts` owns database invariants, authorization, state transitions, aggregation and anonymous export. `app.ts` authenticates HTTP and Socket.IO, validates payloads, rate limits operations and projects snapshots separately per role. No browser accesses the database directly.
 
-React screens in `participant-app` share `useLive`, components, design tokens and the presenter view with the plugin. The editor bridge only adds current-slide insertion and official `PluginWindow` calls. A teammate can use `/presenter` while the main speaker runs the slideshow. `/display?session=...` needs no admin token and receives only publishable aggregates.
+React screens share `useLive`, components and design tokens with the plugin's separate `AssetTray`. Session/voting controls live on `/presenter`; the plugin never logs in as administrator or makes admin requests. Its bridge adds borderless image-filled rectangles, tags them by origin/scene/kind with a unique persistent object name, and updates only their picture fills. Dimensions stay constant within each scene/type as frequencies change. Commands are serialized; an unconfirmed command blocks further operations until the panel is reopened.
+
+Bindings survive saving/reopening the deck and can be reused for new sessions on the same origin/scene IDs. QR follows the connected session. Active-scene assets update; other scenes keep their last picture until activated. Keep assets ungrouped and names intact: documented `GetAllShapes` returns top-level shapes. Downloaded exports, old PNGs and a closed/offline plugin do not provide automatic updates. Scene configuration and class import remain JSON/CSV administration workflows; this revision does not add a visual scene creator. A teammate can use `/presenter` while the main speaker runs the slideshow. `/display?session=...` needs no admin token and receives only publishable aggregates.
 
 The root npm package manages dependencies for four small workspaces. Vite builds the web application; esbuild bundles the backend and two plugin entries. The plugin has no remote JS/CDN dependency. Backend dependencies remain external in the Node bundle and are installed by `npm ci`.
 

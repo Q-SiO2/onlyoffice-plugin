@@ -1,7 +1,7 @@
 import { useCallback, useState } from 'react';
 import QRCode from 'qrcode';
 import { allowed, stateLabels, type Action } from '../../shared/model.ts';
-import { request, downloadCsv, downloadBlob } from './api.ts';
+import { request, downloadCsv, downloadPng } from './api.ts';
 import { Brand, Confirm, Connection, Notice, QR, Results } from './components.tsx';
 import { useLive } from './useLive.ts';
 import { resultsPng } from './render-results.ts';
@@ -45,6 +45,7 @@ export function Presenter({ bridge }: { bridge?: PluginBridge }) {
     [message, setMessage] = useState(''),
     [busy, setBusy] = useState(false),
     [showQr, setShowQr] = useState(false);
+  const [transparentAssets, setTransparentAssets] = useState(true);
   const [confirm, setConfirm] = useState<{ message: string; run: () => void } | null>(null);
   const revoke = useCallback(() => {
     setToken('');
@@ -116,11 +117,11 @@ export function Presenter({ bridge }: { bridge?: PluginBridge }) {
                 s.results!,
                 kind === 'poll' ? s.scene!.poll.question : s.scene!.words.prompt,
                 kind,
+                transparentAssets ? { transparent: true, chartOnly: true } : {},
               );
         if (bridge) await bridge.insert(data);
         else {
-          const blob = await (await fetch(data)).blob();
-          downloadBlob(blob, `paloalto-${kind}.png`);
+          downloadPng(data, `paloalto-${kind}.png`);
         }
       },
       bridge
@@ -477,6 +478,14 @@ export function Presenter({ bridge }: { bridge?: PluginBridge }) {
                       </p>
                     </div>
                     <div className="button-row">
+                      <label className="asset-export-option">
+                        <Input
+                          type="checkbox"
+                          checked={transparentAssets}
+                          onChange={(e) => setTransparentAssets(e.target.checked)}
+                        />
+                        Graphiques transparents pour vos diapositives
+                      </label>
                       <Button
                         disabled={busy}
                         onClick={() => void insert('poll')}

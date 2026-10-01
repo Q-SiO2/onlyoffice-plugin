@@ -10,7 +10,7 @@ The delivery includes `paloalto-live-project.zip` (portable source, lockfile, do
 
 ## Use the live deployment
 
-The platform is deployed at <https://paloalto-live-production.up.railway.app>. Open <https://paloalto-live-production.up.railway.app/presenter> to control it. In Railway, open project **appealing-charisma**, service **paloalto-live**, **Variables** and reveal/copy `ADMIN_KEY` for presenter/plugin login. Do not share that key with participants.
+The platform is deployed at <https://paloalto-live-production.up.railway.app>. Open <https://paloalto-live-production.up.railway.app/presenter> to control it. In Railway, open project **appealing-charisma**, service **paloalto-live**, **Variables** and reveal/copy `ADMIN_KEY` for website presenter login. Do not share that key with participants.
 
 Railway remains on the active Trial allowance. A 500 MB persistent volume is mounted at `/app/data`; the Docker build, mounted startup, HTTPS health, presenter login and session survival across redeployment passed. 31 simultaneous hosted WebSocket observers received session snapshots without creating students or votes. The empty verification session is finished; choose **Démarrer une session** when preparing your class. The class whitelist is empty, so import your class and distribute personal codes before presenting. See `docs/RAILWAY.md` for the protected import workflow and credit/expiry checks.
 
@@ -36,17 +36,17 @@ This resets the current demo scene, opens voting, connects clients, saves votes/
 
 ## Install in ONLYOFFICE
 
-1. Open a presentation in ONLYOFFICE Desktop Editors (manifest minimum 8.3; plugin loading checked on installed 9.3.1.8).
+1. Open a presentation in ONLYOFFICE Desktop Editors (manifest minimum 9.3; this computer has 9.3.1.8).
 2. Open **Plugins → Plugin Manager → My plugins → Install plugin manually**.
 3. Select the delivered `paloalto-live.plugin` file, or `dist/paloalto-live.plugin` inside the project.
-4. Open **Plugins → Palo Alto Live**. For the hosted platform, enter `https://paloalto-live-production.up.railway.app` and the `ADMIN_KEY` from Railway Variables. For the local demo, use `http://localhost:3000` and `demo-presenter`.
-5. Select a blank slide in edit mode to insert result/QR PNGs. Images are added without removing existing objects. Inserted images are snapshots; use the large results window or browser projector for live updates.
+4. Open **Plugins → Palo Alto Live**. Paste `https://paloalto-live-production.up.railway.app` or your public presentation link and choose **Charger les graphiques**. For the local demo use `http://localhost:5173`. The plugin requires no admin key; operate the session on the website `/presenter`.
+5. Select a slide in edit mode and choose **Ajouter** for its poll, word cloud or QR. Drag/resize the selected graphic using native slide handles. Keep linked graphics ungrouped and their names intact. Published results automatically update active-scene assets while the plugin is open and connected, preserving position, size and rotation. Other scenes retain their last picture until activated again.
 
-Plugin 1.0.1 is already installed on this computer: the stale GUID-folder copy was backed up and replaced while ONLYOFFICE was closed, and all 20 installed build files were hash-verified. Reopen ONLYOFFICE to load the new interface and scrolling panel. On another computer, install the delivered archive. See `docs/ONLYOFFICE_PLUGIN.md` for the per-user folder alternative and debugging.
+Plugin 1.1.0 is installed on this computer: the stale GUID-folder copy was backed up and replaced while ONLYOFFICE was closed, and all 20 installed build files were hash-verified. Reopen ONLYOFFICE to load the new interface and scrolling panel. On another computer, install the delivered archive. See `docs/ONLYOFFICE_PLUGIN.md` for the per-user folder alternative and debugging.
 
 ## Architecture and completed functionality
 
-An npm-workspace TypeScript project uses React/Vite for phones and presenter screens, Express/Socket.IO for commands and live updates, and SQLite WAL for persistent records. A locally bundled official ONLYOFFICE SDK bridges the same presenter dashboard to documented plugin windows and image insertion APIs.
+An npm-workspace TypeScript project uses React/Vite for phones and presenter screens, Express/Socket.IO for commands and live updates, and SQLite WAL for persistent records. A locally bundled official ONLYOFFICE SDK bridges a separate read-only asset tray to documented shape/image-fill APIs. Session/voting administration runs on the website.
 
 Implemented: one QR/login across scenes; Moroccan whitelist normalization plus private individual code; expiring sessions; duplicate-vote prevention; configurable single/multiple-choice polls and word choices; frequency-sized clouds; all presenter states and counters; reset confirmations; reconnect snapshots and offline vote retry; anonymous CSV; PNG results and QR; CSV whitelist import; retention/deletion; isolated demo and simulator. UI defaults to French and uses actual free Unlumen primitives, the exact plugin logo, navy/gold branding and aligned SVG icons. JSON config supports 1–100 scenes.
 
@@ -66,9 +66,9 @@ Full details are in `docs/VALIDATION.md`. These are classroom-sized checks, not 
 
 ## Known limits and remaining setup
 
-The plugin appeared and loaded in the native ONLYOFFICE sidebar. The user stopped Computer Use with Escape before the corrected native backend connection and real slide insertion could be retested. Both passed browser/API-contract checks afterward, but **native connection, native insertion, large windows during fullscreen slides/video, and real Android/iPhone network behavior remain unverified**. Rehearse using a copy of the deck before the class.
+The plugin appeared and loaded in the native ONLYOFFICE sidebar. The user stopped Computer Use with Escape before the corrected native backend connection and real slide insertion could be retested. Both passed browser/API-contract checks afterward, but **native connection, insertion, automatic picture refresh in edit/fullscreen modes, and real Android/iPhone network behavior remain unverified**. Rehearse using a copy of the deck before the class.
 
-Scenes and voting are manual. No dependable embedded-video-end hook was found in the official event documentation. Use the presenter/co-presenter controls after playback. Static slide images do not refresh automatically. Custom text is optional and has no moderation service; visible clouds show the top 24 words, while CSV retains all frequencies.
+Scenes and voting are manual. No dependable embedded-video-end hook was found in the official event documentation. Use the presenter/co-presenter controls after playback. Linked assets from plugin 1.1.0 refresh while it is open and connected; PNG downloads and graphics from older versions are snapshots. Scene configuration remains JSON, and class import remains a protected CSV workflow. Custom text is optional and has no moderation service; visible clouds show the top 24 words, while CSV retains all frequencies.
 
 The delivered backend runs as one Node service on Railway with a mounted SQLite disk. Railway built the Docker image and successfully started it in production mode. Trial credit and expiry limit hosting availability; check both before class. The classroom LAN remains a fallback. Compose, Render and Caddy configurations remain alternative templates.
 

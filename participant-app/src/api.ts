@@ -49,3 +49,10 @@ export function downloadBlob(blob: Blob, name: string) {
   a.click();
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
+export function downloadPng(dataUrl: string, name: string) {
+  // Decode locally: fetching a data: URL is blocked by the production connect-src policy.
+  const bytes = Uint8Array.from(atob(dataUrl.slice(dataUrl.indexOf(',') + 1)), (c) =>
+    c.charCodeAt(0),
+  );
+  downloadBlob(new Blob([bytes], { type: 'image/png' }), name);
+}

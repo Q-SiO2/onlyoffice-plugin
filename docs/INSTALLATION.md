@@ -1,6 +1,6 @@
 # Installation
 
-Install Node.js 24 or later (includes npm). Use current Chrome, Firefox, Safari or Edge on phones; keep cookies/storage enabled for this origin. ONLYOFFICE Desktop Editors 8.3+ is required for the plugin. 9.3.1.8 was available in the development environment; older supported versions need a classroom rehearsal. Internet is needed for initial dependency installation, not for LAN operation afterward.
+Install Node.js 24 or later (includes npm). Use current Chrome, Firefox, Safari or Edge on phones; keep cookies/storage enabled for this origin. ONLYOFFICE Desktop Editors 9.3+ is required for linked graphics. Installed 9.3.1.8 supports the documented APIs; native insertion and refresh still need rehearsal. Internet is needed for initial dependency installation, not for LAN operation afterward.
 
 From the repository root:
 

@@ -4,10 +4,10 @@
 
 1. Demandez au responsable technique de démarrer le serveur, importer la vraie liste et distribuer les codes individuels.
 2. Ouvrez votre présentation dans ONLYOFFICE Desktop Editors.
-3. Cliquez **Plugins → Palo Alto Live**.
-4. Entrez l’adresse du serveur et la clé présentateur. Ne projetez pas la clé.
-5. Cliquez **Démarrer une session**. En démo, une session est déjà créée.
-6. Cliquez **Afficher le QR code** ou **QR code en grande fenêtre**. Vous pouvez aussi l’insérer sur une diapositive d’accueil.
+3. Ouvrez le site `/presenter` et entrez la clé présentateur. Ne projetez pas la clé : elle reste sur le site.
+4. Sur le site, cliquez **Démarrer une session** puis activez votre première scène. En démo, une session est déjà créée.
+5. Dans **Plugins → Palo Alto Live**, collez le lien public de la présentation ou l’adresse du site et cliquez **Charger les graphiques**. Aucune clé n’est demandée ici.
+6. Sélectionnez votre diapositive et ajoutez le QR, le sondage ou le nuage de mots depuis le plugin. Faites glisser et redimensionnez le graphique sélectionné avec les poignées de l’éditeur. Pour préparer les autres scènes, activez-les sur le site puis ajoutez leurs graphiques aux diapositives correspondantes.
 7. Testez le QR avec un vrai téléphone. Si l’adresse contient `localhost`, demandez au responsable de corriger l’adresse publique avant le cours.
 8. Attendez les étudiants. Le compteur indique les appareils actuellement connectés, pas une liste de numéros.
 
@@ -20,8 +20,8 @@ Le mode démo porte une bannière explicite et ne convient pas à la vraie liste
 3. Cliquez **Ouvrir le vote** quand la scène est terminée. Les questions apparaissent sur les téléphones.
 4. Surveillez le compteur de réponses. Un étudiant ayant déjà répondu ne peut pas recommencer sans réinitialisation.
 5. Cliquez **Fermer le vote**. Les nouveaux votes ne sont plus acceptés.
-6. Cliquez **Afficher les résultats**, puis ouvrez la grande fenêtre ou l’écran de projection. Seuls les résultats agrégés sont affichés.
-7. Si vous voulez conserver les résultats dans le diaporama, revenez en mode édition sur une diapositive vide et cliquez **Insérer le sondage** / **Insérer le nuage de mots**. Les images sont des instantanés. Vos autres objets ne sont pas supprimés.
+6. Sur le site, cliquez **Afficher les résultats**. Le plugin actualise les graphiques liés à cette scène sans changer leur position ou leurs dimensions. Vous pouvez aussi ouvrir l’écran de projection du site. Seuls les résultats agrégés sont affichés.
+7. Gardez le plugin ouvert et connecté, avec les graphiques non groupés et leurs noms d’objet inchangés. Les autres scènes gardent leur dernière image jusqu’à leur activation. Les PNG téléchargés depuis le site et les images de l’ancien plugin sont des instantanés : recréez une fois les anciens graphiques avec **Ajouter** pour les lier.
 8. Cliquez **Expliquer l’axiome** et faites votre commentaire.
 9. Cliquez **Retour attente**, puis **Scène suivante**. Les étudiants restent sur la même page.
 
@@ -29,7 +29,7 @@ Le vote doit être fermé avant de changer de scène. **Masquer les résultats**
 
 ## Pendant un diaporama plein écran
 
-Le plugin est principalement un panneau du mode édition. Pour éviter de naviguer entre les fenêtres, un coéquipier peut piloter le même serveur depuis `/presenter`. L’état est partagé; si deux personnes agissent simultanément, un message peut demander de réessayer plutôt que d’écraser un autre contrôle. Le présentateur reste maître du démarrage/arrêt des vidéos.
+Le plugin sert à composer vos diapositives en mode édition. Toutes les commandes de séance/vote sont sur `/presenter`, qu’un coéquipier peut piloter pendant le diaporama. Répétez l’actualisation native pendant le plein écran avant le cours ; utilisez `/display` comme écran de projection si nécessaire. L’état est partagé ; deux commandes simultanées peuvent demander de réessayer. Le présentateur lance et arrête les vidéos dans ONLYOFFICE.
 
 ## Après la présentation
 

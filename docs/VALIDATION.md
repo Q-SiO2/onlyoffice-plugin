@@ -23,7 +23,7 @@ Validation date: **2026-10-01**. Windows development environment, Node 24.15.0, 
 
 The classroom browser test exercises one login, failed auth feedback, automatic voting appearance, three-word bound, offline queued submission and reconnect, confirmation after page reload, close/results, anonymous CSV download, reset and subsequent scene without re-authentication, and finish. Screenshots are saved in `docs/screenshots`. Generated test traces contain only synthetic data and are excluded from Git/delivery.
 
-The plugin browser harness loads the **built** package bundle from `file://` to test opaque-origin networking against the real demo server. It mocks the documented Office SDK host objects, executes the serialized insertion callback with no bundle closure, checks that existing objects survive, checks PNG data and aspect/position, and exercises QR/window creation. This validates plugin code against the documented API contract; it does **not** prove native slide insertion.
+The plugin browser harness loads the **built** package bundle from `file://` to test opaque-origin networking against the real demo server. It mocks the documented Office SDK host objects, executes the serialized insertion callback with no bundle closure, checks that existing objects survive, checks transparent PNG data, aspect/position, public-only networking, website publication, live fill replacement, preserved geometry/selection, scene isolation, unique bindings and deck reuse across sessions. This validates plugin code against the documented API contract; it does **not** prove native slide insertion.
 
 ## Native ONLYOFFICE coverage and boundary
 
@@ -43,12 +43,20 @@ Presenter login with the generated Railway key passed. An empty session survived
 
 ## Classroom rehearsal to complete
 
-1. Install the final `.plugin` archive and connect it to your real HTTPS/LAN backend.
-2. Use a copy of the presentation and a blank slide. Insert poll/word PNG and QR; check sizing, existing content and undo.
-3. Open/close the large QR/results window, and test the workflow with fullscreen slides/video and a co-presenter's browser controller.
+1. Reopen the locally updated plugin or install the final `.plugin` on another computer. Load the public site/link, with administration on `/presenter`.
+2. Use a copy of the presentation. Add poll/word/QR graphics, move/resize them, publish/hide/reset on the website, and verify native refresh preserves geometry and existing content.
+3. Keep the plugin open/connected and rehearse fullscreen slides/video with the website controller. Check native graphic refresh; use `/display` as the tested fallback.
 4. Scan from one actual Android and iPhone, verify individual code, reconnect, vote, next scene and projector readability on the intended network.
 5. Confirm the real class import, private code distribution, retention policy, persistent disk and backup before inviting everyone.
 
 ## Unlumen revision — 2026-10-01
 
 16 Node tests and 3 Playwright tests passed again after the UI revision. The browser flow additionally checks keyboard-operated result tabs and clipboard feedback. Responsive checks validate the actual 56 px plugin logo, square proportions and centered alignment at 320/390/760 px. The plugin harness runs at 360 px without horizontal overflow and confirms the same icon is decoded for slide PNG exports. Lint, strict typecheck, production build and compiled production smoke test passed. Railway deployment evidence is tracked in RAILWAY.md.
+
+## Asset tray 1.1.0 — 2026-10-01
+
+The editor now loads a separate public-only asset tray, with session/voting commands on the website. The packaged file-origin harness checks transparent corners, wheel/Ctrl+End scrolling with host scrolling locked, selection after adding, publication-driven picture replacement, preservation of moved/resized/rotated geometry and unrelated selection, unique names for duplicate additions, hiding/reset previews, scene isolation and reuse across sessions with a refreshed QR. A delayed SDK mock confirms commands do not overlap. No test credentials are entered in the plugin.
+
+The classroom browser test downloads transparent poll/word PNGs and the optional opaque 1600×900 export under the same connect-src restriction used in production. PNG generation decodes locally for download, avoiding a data-URL fetch blocked by that policy. Lint, formatting, strict typecheck, build, 16 Node tests, 3 Playwright tests and compiled production smoke pass. Screenshots include `asset-tray.png`.
+
+The local 1.0.1 installation was backed up and replaced with 1.1.0 while ONLYOFFICE was closed; all 20 build files were hash-verified. Native insertion and automatic fill refresh remain unverified, including fullscreen/slideshow behavior. This revision raises the manifest minimum to 9.3 for documented object names and requires linked graphics to stay ungrouped with names intact.

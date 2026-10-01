@@ -1,16 +1,33 @@
 // Narrow declarations for the documented SDK surface used by this plugin.
+interface AssetShape {
+  SetPosition(x: number, y: number): void;
+  Select(): boolean;
+  SetName(name: string): boolean;
+  GetName(): string;
+  SetFill(fill: unknown): boolean;
+}
+interface AssetSlide {
+  AddObject(o: unknown): void;
+  GetAllShapes(): AssetShape[];
+}
 interface PresentationApi {
-  GetCurrentSlide(): { AddObject(o: unknown): void };
+  GetCurrentSlide(): AssetSlide | null;
+  GetAllSlides(): AssetSlide[];
   GetWidth(): number;
   GetHeight(): number;
 }
 declare const Api: {
   GetPresentation(): PresentationApi;
-  CreateImage(
-    src: string,
+  CreateShape(
+    type: string,
     width: number,
     height: number,
-  ): { SetPosition(x: number, y: number): void };
+    fill: unknown,
+    stroke: unknown,
+  ): AssetShape;
+  CreateBlipFill(src: string, type: 'stretch'): unknown;
+  CreateNoFill(): unknown;
+  CreateStroke(width: number, fill: unknown): unknown;
 };
 declare const Asc: {
   scope: Record<string, unknown>;

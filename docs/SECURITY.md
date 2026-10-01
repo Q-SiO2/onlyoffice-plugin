@@ -4,12 +4,12 @@ This is a classroom tool with an explicit authorization boundary. A phone whitel
 
 ## Permissions
 
-| Role                   | Operations                                                                                                    |
-| ---------------------- | ------------------------------------------------------------------------------------------------------------- |
-| Public projector       | Current scene/status and public join URL; aggregates only in RESULTS                                          |
-| Participant            | Authenticate, view current state and their own submitted status, submit one valid current-round answer        |
-| Presenter              | Start/finish, scene/state changes, reset, read aggregates, export anonymous CSV, delete finished-session data |
-| Local DB administrator | Import/deactivate/delete whitelist and manage retention/backups                                               |
+| Role                          | Operations                                                                                                    |
+| ----------------------------- | ------------------------------------------------------------------------------------------------------------- |
+| Public projector / asset tray | Current scene/status and public join URL; aggregates only in RESULTS                                          |
+| Participant                   | Authenticate, view current state and their own submitted status, submit one valid current-round answer        |
+| Presenter                     | Start/finish, scene/state changes, reset, read aggregates, export anonymous CSV, delete finished-session data |
+| Local DB administrator        | Import/deactivate/delete whitelist and manage retention/backups                                               |
 
 Presenter key is environment-only. Login returns a cryptographically random bearer token, stored as a hash in an expiring in-memory map. Closing/reloading the dashboard requires login again. Participant session tokens are random, stored as SHA-256 in SQLite, and persist in that phone's localStorage for session recovery. Tokens never appear in query strings, QR codes, CSVs or public screens. An XSS or stolen unlocked phone can steal a localStorage token; keep the web origin trusted and use HTTPS. The app uses React text rendering, no untrusted HTML injection, security headers and CSP in production.
 
