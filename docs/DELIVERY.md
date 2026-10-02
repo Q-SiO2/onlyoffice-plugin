@@ -1,6 +1,6 @@
 # Palo Alto Live — start here
 
-Built and validated on 2026-10-01. The project is in:
+Built and validated on 2026-10-01; the hosted asset-tray revision was verified on 2026-10-02. The project is in:
 
 ```text
 C:\Users\Q\Documents\Codex\2026-10-01\files-pasted-by-the-user-you\codingprojects\paloalto-live

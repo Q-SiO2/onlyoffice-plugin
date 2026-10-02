@@ -31,7 +31,7 @@ Railway was reconnected. The user confirmed active free trial credit. The dashbo
 
 CPU/memory use the account's Trial defaults (dashboard maximum 2 vCPU / 1 GB); custom lower caps were unavailable on this account. These are maximum resources, not measured consumption. The earlier requested Amsterdam/512 MB settings did not apply. The actual settings above were read back after deployment.
 
-Generated `ADMIN_KEY` and `PHONE_HASH_SECRET` are stored in Railway Variables. Reveal/copy `ADMIN_KEY` there to log into the presenter or plugin; it is never included in the repository or downloads. Production has an **empty whitelist**. Import the real class using the workflow below before inviting participants. No real student data has been uploaded. An empty presentation session survived a deliberate redeployment (`cbfbd11b-9007-4b7d-9414-40a733fc69dd`); its ID and WAITING state were read back unchanged. Presenter login with the generated key and 31 simultaneous production WebSocket observer connections passed. This transport check created no participant records or votes; the authenticated voting simulation remains the local 100-client test. The empty verification session was finished afterward. Real phone/editor rehearsal remains to perform with the imported class.
+Generated `ADMIN_KEY` and `PHONE_HASH_SECRET` are stored in Railway Variables. Reveal/copy `ADMIN_KEY` there to log into the website presenter; it is never included in the repository or downloads. Production has an **empty whitelist**. Import the real class using the workflow below before inviting participants. No real student data has been uploaded. An empty presentation session survived a deliberate redeployment (`cbfbd11b-9007-4b7d-9414-40a733fc69dd`); its ID and WAITING state were read back unchanged. Presenter login with the generated key and 31 simultaneous production WebSocket observer connections passed. This transport check created no participant records or votes; the authenticated voting simulation remains the local 100-client test. The empty verification session was finished afterward. Real phone/editor rehearsal remains to perform with the imported class.
 
 ## Service setup
 
@@ -88,10 +88,14 @@ Download the generated private output through the protected volume/shell workflo
 1. Confirm `https://YOUR-SERVICE.up.railway.app/api/health` returns `ok: true` and `demo: false`.
 2. Open `/presenter`, authenticate with the configured key and start a session. The same domain must appear in the QR code.
 3. Join from an actual phone with an authorized number and personal code. Open/close a vote, show results, and move to another scene without logging in again.
-4. Point the ONLYOFFICE plugin to the HTTPS domain. Rehearse image insertion and large windows using a copy of the deck. Native insertion is still a manual verification item.
+4. Point the asset tray to the HTTPS domain/public link. Add its graphics, drag/resize them, then publish/hide/reset on the website. Rehearse native fill refresh, including fullscreen, using a deck copy. Keep linked graphics ungrouped and the plugin open/connected. No admin key is entered in the plugin.
 5. Confirm the data survives an intentional service restart, verify available credits, and export results after the class. Never run the synthetic simulator against the real service; it intentionally refuses production mode.
 
 The deployed app offers participant pages, not video streaming. Presentation video stays local in ONLYOFFICE, so audience connections mostly carry small state/vote messages.
+
+## Linked graphics deployment — 2026-10-02
+
+The repo was connected but production had no source branch selected, so new pushes did not deploy. Production is now explicitly connected to `main`. Deployment `a5a8ae46-15c3-42b0-b0b7-96b45b9d502f` built source commit `b7936ca5aded1b47b0f7754165267086935bea9f` and reached SUCCESS, with mounted-volume startup and `/api/health` passing. HTTPS routes/CSP and public state passed; the served presenter bundle matches the verified local build byte-for-byte, including transparent exports. The dashboard showed 30 trial days or $4.99 credit remaining at verification; no paid upgrade was made. This is a point-in-time balance.
 
 ## Free allowance contingency
 
