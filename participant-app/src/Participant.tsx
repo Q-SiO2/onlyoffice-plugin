@@ -35,7 +35,6 @@ export function Participant() {
           if (s.session) {
             setSession(s.session);
             setToken(localStorage.getItem(`paloalto:${s.session}`) || '');
-            history.replaceState(null, '', `/?session=${s.session}`);
           }
         })
         .catch(() => {
@@ -48,7 +47,12 @@ export function Participant() {
       clearInterval(timer);
     };
   }, [querySession]);
-  const s = live.snapshot || publicState;
+  const s =
+    live.snapshot?.session === session
+      ? live.snapshot
+      : publicState?.session === session
+        ? publicState
+        : undefined;
   async function login(e: React.FormEvent) {
     e.preventDefault();
     if (!session && !pin) return;
@@ -60,7 +64,7 @@ export function Participant() {
         !querySession || !session || s?.managed ? '/api/presentations/join' : '/api/join',
         '',
         {
-          sessionId: session,
+          sessionId: session || undefined,
           phone,
           pin,
           code: pin,

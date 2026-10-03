@@ -66,7 +66,45 @@ test('prepare scenes and manual voters, return later, join with shared code and 
     .getByRole('link', { name: 'Ouvrir l’écran de projection' })
     .getAttribute('href');
   const session = new URL(link!, 'http://localhost').searchParams.get('session');
-  await phone.goto(`/?session=${session}`);
+  // The newest presentation may be finished; the typed code must still select this active one.
+  const other = await context.request.post('http://127.0.0.1:5173/api/presentations', {
+    data: {
+      email: 'other@example.test',
+      code: `OTHER-${randomUUID()}`,
+      title: 'Other finished presentation',
+    },
+  });
+  const otherToken = (await other.json()).token;
+  const headers = { Authorization: `Bearer ${otherToken}` };
+  await context.request.post('http://127.0.0.1:5173/api/admin/presentation', {
+    headers,
+    data: {
+      revision: 1,
+      config: {
+        title: 'Other finished presentation',
+        scenes: [
+          {
+            id: randomUUID(),
+            title: 'Other scene',
+            poll: {
+              question: 'Other?',
+              options: [
+                { id: 'a', label: 'A' },
+                { id: 'b', label: 'B' },
+              ],
+            },
+            words: { prompt: 'Words?', options: [], maxSelections: 0 },
+          },
+        ],
+      },
+    },
+  });
+  const finishOther = await context.request.post('http://127.0.0.1:5173/api/admin/command', {
+    headers,
+    data: { action: 'finish', expectedVersion: 2, confirm: true },
+  });
+  expect(finishOther.ok()).toBe(true);
+  await phone.goto('/');
   await phone.getByLabel('Numéro de téléphone').fill('0712345678');
   await phone.getByLabel('Code de présentation', { exact: true }).fill(code);
   await phone.getByRole('button', { name: 'Rejoindre la présentation' }).click();
@@ -74,6 +112,7 @@ test('prepare scenes and manual voters, return later, join with shared code and 
   await phone.getByLabel('Numéro de téléphone').fill('0612345678');
   await phone.getByRole('button', { name: 'Rejoindre la présentation' }).click();
   await expect(phone.getByRole('heading', { name: 'Vous êtes connecté.' })).toBeVisible();
+  expect(new URL(phone.url()).searchParams.get('session')).toBe(session);
   await expect(admin.getByRole('button', { name: 'Ouvrir le vote', exact: true })).toBeEnabled();
   await admin.getByRole('button', { name: 'Ouvrir le vote', exact: true }).click();
   await expect(phone.getByRole('heading', { name: 'Le silence communique-t-il ?' })).toBeVisible();
