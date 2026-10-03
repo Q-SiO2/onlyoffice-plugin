@@ -22,13 +22,13 @@ test('join and presenter login stay readable on small phones with reduced motion
     });
     expect(alignment.square).toBeLessThan(1);
     expect(alignment.center).toBeLessThan(1);
-    await expect(page.getByLabel('Code personnel')).toBeVisible();
+    await expect(page.getByLabel(/Code personnel|Code de présentation/)).toBeVisible();
     await expect(page.getByRole('button', { name: 'Rejoindre la présentation' })).toBeVisible();
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(
       true,
     );
     await page.goto('/presenter');
-    await expect(page.getByLabel('Clé présentateur')).toBeVisible();
+    await expect(page.getByLabel('E-mail de l’organisateur')).toBeVisible();
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(
       true,
     );

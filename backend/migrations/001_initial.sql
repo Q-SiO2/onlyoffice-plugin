@@ -9,7 +9,6 @@ CREATE TABLE IF NOT EXISTS presentation_sessions (
  scene_index INTEGER NOT NULL DEFAULT 0 CHECK(scene_index >= 0), version INTEGER NOT NULL DEFAULT 1,
  created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, finished_at TEXT
 );
-CREATE UNIQUE INDEX IF NOT EXISTS one_active_presentation ON presentation_sessions ((1)) WHERE state != 'FINISHED';
 CREATE TABLE IF NOT EXISTS scene_rounds (
  session_id TEXT NOT NULL REFERENCES presentation_sessions(id) ON DELETE CASCADE, scene_id TEXT NOT NULL, epoch INTEGER NOT NULL DEFAULT 0,
  PRIMARY KEY(session_id, scene_id)

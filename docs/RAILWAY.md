@@ -2,6 +2,12 @@
 
 Deployed and verified on **2026-10-01** for the current React + Express + Socket.IO + SQLite architecture.
 
+## Normal use of the presentation studio
+
+The primary dashboard now creates presentations using an organizer email and a presentation code. Save questions in **Scènes & questions**, add phones/names directly in **Votants**, and use **Présenter** on the day. No local server, Railway Variables lookup or CSV import is needed for this workflow. Email is an identifier, not a verified identity or email delivery service; share only the code with voters. The mounted database saves preparation and voter lists across deployments. Persisted countdown deadlines are handled by the backend, including after a restart.
+
+The configuration/import/ADMIN_KEY instructions below describe infrastructure and legacy maintenance; they are not required classroom setup steps.
+
 ## Choice and budget
 
 Deploy the web app and backend **together in one Railway service**, with one attached persistent volume. Your presentation laptop then only runs ONLYOFFICE/the presenter interface; audience traffic and saved votes go to Railway. No separate Vercel frontend or second paid database is needed.

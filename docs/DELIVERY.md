@@ -1,99 +1,15 @@
-# Palo Alto Live — start here
+# Use Palo Alto Live
 
-Built and validated on 2026-10-01; the hosted asset-tray revision was verified on 2026-10-02. The project is in:
+You do not need to start a local server. Railway runs the platform.
 
-```text
-C:\Users\Q\Documents\Codex\2026-10-01\files-pasted-by-the-user-you\codingprojects\paloalto-live
-```
+Open https://paloalto-live-production.up.railway.app/presenter.
 
-The delivery includes `paloalto-live-project.zip` (portable source, lockfile, documentation and compiled builds) and `paloalto-live.plugin` (installable ONLYOFFICE plugin). The working repository retains its local Git history. Archives exclude `.env`, databases, private codes, dependencies and test traces. If extracting the ZIP elsewhere, use that extracted `paloalto-live` directory in the commands below.
+1. Choose **Créer une présentation**. Enter your organizer email and title. Save the generated presentation code; you use email + code to return later. No email is sent.
+2. In **Scènes & questions**, add your scenes, questions, answers, optional word choices and presenter notes. Set the vote duration (0 means manual closure). Click **Enregistrer les scènes**. You can do this days ahead.
+3. In **Votants**, add each person's name and Moroccan phone number directly. Adding the same number updates that entry. No CSV is required.
+4. On presentation day, open **Présenter** and share the QR/link plus the code. Voters log in with their allowed phone number and that code. Keep the organizer email private.
+5. Open a vote when its scene is ready. The countdown automatically closes voting and displays results, even if the dashboard tab closes. Move to the next scene when ready, then open its vote. Video playback and scene advancement remain under your control.
+6. In ONLYOFFICE, open **Plugins → Palo Alto Live** and paste this presentation's participant link. Add the poll, word-cloud or QR graphics, then position them with the slide handles. Keep linked graphics ungrouped and the plugin open/connected for automatic refresh.
+7. Finish the presentation and export results if needed.
 
-## Use the live deployment
-
-The platform is deployed at <https://paloalto-live-production.up.railway.app>. Open <https://paloalto-live-production.up.railway.app/presenter> to control it. In Railway, open project **appealing-charisma**, service **paloalto-live**, **Variables** and reveal/copy `ADMIN_KEY` for website presenter login. Do not share that key with participants.
-
-Railway remains on the active Trial allowance. A 500 MB persistent volume is mounted at `/app/data`; the Docker build, mounted startup, HTTPS health, presenter login and session survival across redeployment passed. 31 simultaneous hosted WebSocket observers received session snapshots without creating students or votes. The empty verification session is finished; choose **Démarrer une session** when preparing your class. The class whitelist is empty, so import your class and distribute personal codes before presenting. See `docs/RAILWAY.md` for the protected import workflow and credit/expiry checks.
-
-## Run the isolated demo locally
-
-Install Node.js 24 or later if needed, then run in PowerShell:
-
-```powershell
-cd "C:\Users\Q\Documents\Codex\2026-10-01\files-pasted-by-the-user-you\codingprojects\paloalto-live"
-npm ci
-npm run demo
-```
-
-Open `http://localhost:5173` for the participant page. Use phone `0610000001` and code `demo1234`. Open `http://localhost:5173/presenter` with key `demo-presenter`. If a previous demo session is finished, choose **Démarrer une session**. Demo data is fictional and must not be used for a real class.
-
-For a crowd demonstration, in another terminal at the project root:
-
-```powershell
-npm run simulate -- --participants 30
-```
-
-This resets the current demo scene, opens voting, connects clients, saves votes/words and shows results. For actual phones, replace the demo URL with a laptop address reachable from their network; `localhost` in a QR code means the phone itself. See `docs/DEPLOYMENT.md`.
-
-## Install in ONLYOFFICE
-
-1. Open a presentation in ONLYOFFICE Desktop Editors (manifest minimum 9.3; this computer has 9.3.1.8).
-2. Open **Plugins → Plugin Manager → My plugins → Install plugin manually**.
-3. Select the delivered `paloalto-live.plugin` file, or `dist/paloalto-live.plugin` inside the project.
-4. Open **Plugins → Palo Alto Live**. Paste `https://paloalto-live-production.up.railway.app` or your public presentation link and choose **Charger les graphiques**. For the local demo use `http://localhost:5173`. The plugin requires no admin key; operate the session on the website `/presenter`.
-5. Select a slide in edit mode and choose **Ajouter** for its poll, word cloud or QR. Drag/resize the selected graphic using native slide handles. Keep linked graphics ungrouped and their names intact. Published results automatically update active-scene assets while the plugin is open and connected, preserving position, size and rotation. Other scenes retain their last picture until activated again.
-
-Plugin 1.1.0 is installed on this computer: the stale GUID-folder copy was backed up and replaced while ONLYOFFICE was closed, and all 20 installed build files were hash-verified. Reopen ONLYOFFICE to load the new interface and scrolling panel. On another computer, install the delivered archive. See `docs/ONLYOFFICE_PLUGIN.md` for the per-user folder alternative and debugging.
-
-## Architecture and completed functionality
-
-An npm-workspace TypeScript project uses React/Vite for phones and presenter screens, Express/Socket.IO for commands and live updates, and SQLite WAL for persistent records. A locally bundled official ONLYOFFICE SDK bridges a separate read-only asset tray to documented shape/image-fill APIs. Session/voting administration runs on the website.
-
-Implemented: one QR/login across scenes; Moroccan whitelist normalization plus private individual code; expiring sessions; duplicate-vote prevention; configurable single/multiple-choice polls and word choices; frequency-sized clouds; all presenter states and counters; reset confirmations; reconnect snapshots and offline vote retry; anonymous CSV; PNG results and QR; CSV whitelist import; retention/deletion; isolated demo and simulator. UI defaults to French and uses actual free Unlumen primitives, the exact plugin logo, navy/gold branding and aligned SVG icons. JSON config supports 1–100 scenes.
-
-Phones are stored as keyed hashes; personal codes use scrypt; audience displays contain only aggregate results. No admin secret is included in frontend bundles. The system does not query WhatsApp or send messages.
-
-## Verification evidence
-
-- 16 Node tests passed, including phone rules, authorization, unique/idempotent voting, invalid inputs, state/reset safety, privacy, persistence, concurrent realtime clients and actual CSV import CLI.
-- Three Playwright tests passed: classroom flow including Unlumen tabs and clipboard, the built file-origin plugin at 360 px, and responsive/reduced-motion checks with logo alignment.
-- Lint, strict typecheck, formatting, production build and plugin packaging passed.
-- Compiled production server and compiled import CLI passed a smoke test covering static routes/CSP, login, vote and public results.
-- Both 30- and 100-client real Socket.IO simulations passed.
-- Final `npm audit` reported zero known vulnerabilities.
-- Release ZIP is checked for required files and unpacking, with explicit private-file exclusions.
-
-Full details are in `docs/VALIDATION.md`. These are classroom-sized checks, not a general scalability certification.
-
-## Known limits and remaining setup
-
-The plugin appeared and loaded in the native ONLYOFFICE sidebar. The user stopped Computer Use with Escape before the corrected native backend connection and real slide insertion could be retested. Both passed browser/API-contract checks afterward, but **native connection, insertion, automatic picture refresh in edit/fullscreen modes, and real Android/iPhone network behavior remain unverified**. Rehearse using a copy of the deck before the class.
-
-Scenes and voting are manual. No dependable embedded-video-end hook was found in the official event documentation. Use the presenter/co-presenter controls after playback. Linked assets from plugin 1.1.0 refresh while it is open and connected; PNG downloads and graphics from older versions are snapshots. Scene configuration remains JSON, and class import remains a protected CSV workflow. Custom text is optional and has no moderation service; visible clouds show the top 24 words, while CSV retains all frequencies.
-
-The delivered backend runs as one Node service on Railway with a mounted SQLite disk. Railway built the Docker image and successfully started it in production mode. Trial credit and expiry limit hosting availability; check both before class. The classroom LAN remains a fallback. Compose, Render and Caddy configurations remain alternative templates.
-
-For a real class on the hosted service: import your own CSV into its mounted database, distribute generated access codes privately, back up/export results, and complete the native/device rehearsal. Railway already holds generated distinct secrets, the HTTPS URL and allowed origins. The import preserves the class list until an administrator explicitly replaces/deletes it; finished sessions have documented 30-day retention.
-
-## Documentation map
-
-All documents are inside `docs/` in the project/ZIP. `README.md` is the main linked index.
-
-| File                   | Purpose                                             |
-| ---------------------- | --------------------------------------------------- |
-| `INSTALLATION.md`      | Requirements and first setup                        |
-| `ARCHITECTURE.md`      | Components, state and realtime synchronization      |
-| `ONLYOFFICE_PLUGIN.md` | SDK APIs, install/package/debug workflow and limits |
-| `BACKEND_SETUP.md`     | Environment and private CSV import                  |
-| `DEPLOYMENT.md`        | LAN, Docker, persistent hosting and HTTPS           |
-| `DATABASE.md`          | Migration, indexes, uniqueness and relations        |
-| `SECURITY.md`          | Authentication, permissions and threat model        |
-| `PRIVACY.md`           | Stored information, retention and deletion          |
-| `USER_GUIDE.md`        | Participant instructions in French                  |
-| `PRESENTER_GUIDE.md`   | Presenter classroom runbook in French               |
-| `DEVELOPMENT.md`       | Commands, scene configuration and tests             |
-| `TROUBLESHOOTING.md`   | Network, login, state and plugin fixes              |
-| `DESIGN_DECISIONS.md`  | Tradeoffs, alternatives and official research links |
-| `VALIDATION.md`        | Executed checks and remaining manual verification   |
-| `THIRD_PARTY.md`       | SDK provenance and license notices                  |
-
-See `RAILWAY.md` for hosting and `UI_DESIGN.md` for exact free primitive provenance. Screenshots are in `docs/screenshots/`. Deployment templates are `Dockerfile`, `compose.yaml`, `render.yaml` and `deploy/Caddyfile.example`. Root `LICENSE` and SDK notices describe AGPL licensing.
+Questions lock after presentation starts; before then you can save edits and reorder scenes. Native ONLYOFFICE insertion/refresh, including fullscreen, still needs rehearsal. Keep internet available and check Railway trial credit before class.

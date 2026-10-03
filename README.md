@@ -6,7 +6,15 @@ Built for an academic presentation with restrained Memphis geometry, French mobi
 
 The interface uses free MIT-licensed Unlumen Button, Tabs, Highlight, Glowing Badge, Copy and Count Up primitives, the exact plugin icon, and self-hosted Manrope typography. See [UI design and licensing](docs/UI_DESIGN.md). For hosting off the laptop within free/trial allowances, [Railway is the selected provider](docs/RAILWAY.md).
 
-For the handoff, install/run commands, documentation map and verification boundary, read [Start here](docs/DELIVERY.md).
+## Use the hosted platform
+
+No local server is required. Open [the presenter dashboard](https://paloalto-live-production.up.railway.app/presenter), choose **Créer une présentation**, and save your organizer email and generated presentation code.
+
+1. **Scènes & questions**: create/reorder scenes, write poll choices and word prompts, choose the countdown and save. Preparation stays on Railway until presentation day.
+2. **Votants**: enter names and phone numbers directly in the table. No CSV or individual student codes are needed for new presentations.
+3. **Présenter**: share the QR and presentation code. Open voting after each scene; the countdown closes voting and publishes results. Advance to the next scene when ready.
+
+Return using your organizer email and presentation code. Voters use their allowed phone number and that code. The organizer email is an identifier, not an email-verification or delivery service; keep it private because it accompanies the shared code for administrative login. Questions lock when the presentation starts. The ONLYOFFICE plugin stays a read-only asset tray; paste the specific participant link so its graphics follow this presentation.
 
 ## Quick start — isolated local demo
 
@@ -19,7 +27,7 @@ npm run demo
 ```
 
 - Participant: <http://localhost:5173> — phone `0610000001`, code `demo1234`.
-- Presenter: <http://localhost:5173/presenter> — key `demo-presenter`.
+- Presenter: <http://localhost:5173/presenter> — create an email/code presentation with the normal workflow. Legacy fixture controls remain at `/presenter?legacy=1` with key `demo-presenter` for regression testing.
 - Demo automatically creates a session and 100 fictitious eligible students (`0610000001` through `0610000100`). These are synthetic fixtures, not verified unassigned telephone numbers. No SMS is sent.
 - Run `npm run simulate -- --participants 30` in another terminal. This connects clients, casts votes and words, closes voting, and shows results. It refuses production servers.
 - `Ctrl+C` stops development services. Demo uses `data/demo.sqlite`; production credentials and database settings are overridden for the demo.

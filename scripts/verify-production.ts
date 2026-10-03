@@ -1,6 +1,6 @@
 import { spawn, execFile } from 'node:child_process';
 import { promisify } from 'node:util';
-import { mkdir, writeFile, rm } from 'node:fs/promises';
+import { mkdir, writeFile, rm, readFile } from 'node:fs/promises';
 import { randomUUID } from 'node:crypto';
 import assert from 'node:assert/strict';
 const exec = promisify(execFile),
@@ -89,8 +89,48 @@ try {
   await api('/api/admin/command', admin, { action: 'close', expectedVersion: 3 });
   await api('/api/admin/command', admin, { action: 'results', expectedVersion: 4 });
   assert.equal((await api(`/api/public/state?session=${sid}`)).results.total, 1);
+  const owner = (
+    await api('/api/presentations', '', {
+      email: 'presenter@example.test',
+      code: 'COMPILED-PRESENTATION-CODE',
+      title: 'Prepared production smoke',
+    })
+  ).token;
+  const initial = await api('/api/admin/presentation', owner);
+  await api('/api/admin/presentation', owner, {
+    config: JSON.parse(await readFile('shared/scenes.json', 'utf8')),
+    revision: initial.revision,
+  });
+  await api('/api/admin/voters', owner, { phone: '0712345678', name: 'Synthetic compiled test' });
+  await api('/api/admin/logout', owner, {});
+  const returned = (
+    await api('/api/presentations/login', '', {
+      email: 'presenter@example.test',
+      code: 'COMPILED-PRESENTATION-CODE',
+    })
+  ).token;
+  assert.equal((await api('/api/admin/presentation', returned)).voters.length, 1);
+  const voter = await api('/api/presentations/join', '', {
+    phone: '0712345678',
+    code: 'COMPILED-PRESENTATION-CODE',
+  });
+  assert.equal(voter.session, initial.session);
+  const state = await api('/api/state', returned);
+  const activated = await api('/api/admin/command', returned, {
+    action: 'activate',
+    expectedVersion: state.version,
+  });
+  await api('/api/admin/command', returned, { action: 'open', expectedVersion: activated.version });
+  await api('/api/vote', voter.token, {
+    sceneId: 'silence',
+    epoch: 0,
+    optionIds: ['oui'],
+    words: [],
+    requestId: randomUUID(),
+  });
+  assert.equal((await api('/api/state', returned)).results.total, 1);
   console.log(
-    'PASS: compiled CLI import, production Node startup, static routes/CSP, whitelist login, vote and public results.',
+    'PASS: compiled CLI import, production Node startup, static routes/CSP, legacy login/vote, dashboard creation and saved questions, manual roster, email/code return login and shared-code voting.',
   );
 } finally {
   child.kill();

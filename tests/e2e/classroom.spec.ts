@@ -11,7 +11,7 @@ test('one login, realtime vote, word selections, results, reset and next scene',
   });
   const admin = await adminContext.newPage(),
     phone = await phoneContext.newPage();
-  await admin.route('**/presenter', async (route) => {
+  await admin.route('**/presenter?legacy=1', async (route) => {
     const response = await route.fetch();
     await route.fulfill({
       response,
@@ -24,7 +24,7 @@ test('one login, realtime vote, word selections, results, reset and next scene',
   const consoleErrors: string[] = [];
   phone.on('pageerror', (e) => consoleErrors.push(e.message));
   admin.on('pageerror', (e) => consoleErrors.push(e.message));
-  await admin.goto('/presenter');
+  await admin.goto('/presenter?legacy=1');
   await admin.getByLabel('Clé présentateur').fill('demo-presenter');
   await admin.getByRole('button', { name: 'Ouvrir le tableau de bord' }).click();
   await expect(admin.getByRole('button', { name: 'Se déconnecter', exact: true })).toBeVisible();
@@ -43,10 +43,10 @@ test('one login, realtime vote, word selections, results, reset and next scene',
   await mkdir('docs/screenshots', { recursive: true });
   await phone.screenshot({ path: 'docs/screenshots/mobile-login.png', fullPage: true });
   await phone.getByLabel('Numéro de téléphone').fill('0610000042');
-  await phone.getByLabel('Code personnel').fill('wrong');
+  await phone.getByLabel(/Code personnel|Code de présentation/).fill('wrong');
   await phone.getByRole('button', { name: 'Rejoindre la présentation' }).click();
   await expect(phone.getByRole('alert')).toContainText('code incorrect');
-  await phone.getByLabel('Code personnel').fill('demo1234');
+  await phone.getByLabel(/Code personnel|Code de présentation/).fill('demo1234');
   await phone.getByRole('button', { name: 'Rejoindre la présentation' }).click();
   await expect(phone.getByRole('heading', { name: 'Vous êtes connecté.' })).toBeVisible();
   await admin.getByRole('button', { name: 'Ouvrir le vote', exact: true }).click();
@@ -92,7 +92,7 @@ test('one login, realtime vote, word selections, results, reset and next scene',
   await expect(admin.getByRole('button', { name: 'Lien copié', exact: true })).toBeVisible();
   expect(await admin.evaluate(() => navigator.clipboard.readText())).toContain('/?session=');
   await admin.evaluate(() => window.scrollTo(0, 0));
-  await admin.screenshot({ path: 'docs/screenshots/presenter.png', fullPage: false });
+  await admin.screenshot({ path: 'work/presenter-legacy.png', fullPage: false });
   const projector = await adminContext.newPage();
   const href = await admin
     .getByRole('link', { name: 'Ouvrir l’écran de projection' })

@@ -209,9 +209,7 @@ export function Presenter({ bridge }: { bridge?: PluginBridge }) {
               {busy ? 'Connexion…' : 'Ouvrir le tableau de bord'} →
             </Button>
           </form>
-          <p className="fine muted">
-            En mode démo : <strong>demo-presenter</strong>
-          </p>
+
           {error && <Notice error>{error}</Notice>}
         </main>
       ) : (
@@ -234,11 +232,6 @@ export function Presenter({ bridge }: { bridge?: PluginBridge }) {
               Se déconnecter
             </Button>
           </div>
-          {s?.demo && (
-            <Notice>
-              MODE DÉMO · Liste et codes fictifs. Ne pas utiliser pour une vraie classe.
-            </Notice>
-          )}
           {(error || liveError) && <Notice error>{error || liveError}</Notice>}
           {message && <Notice>{message}</Notice>}
           {s ? (

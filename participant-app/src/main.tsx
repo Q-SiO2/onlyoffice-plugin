@@ -3,6 +3,9 @@ import { lazy, Suspense } from 'react';
 import { Participant } from './Participant.tsx';
 import './styles.css';
 const Presenter = lazy(() =>
+  import('./DashboardPresenter.tsx').then((module) => ({ default: module.DashboardPresenter })),
+);
+const LegacyPresenter = lazy(() =>
   import('./Presenter.tsx').then((module) => ({ default: module.Presenter })),
 );
 const Display = lazy(() => import('./Display.tsx').then((module) => ({ default: module.Display })));
@@ -16,7 +19,11 @@ createRoot(document.getElementById('root')!).render(
     }
   >
     {location.pathname === '/presenter' ? (
-      <Presenter />
+      new URLSearchParams(location.search).has('legacy') ? (
+        <LegacyPresenter />
+      ) : (
+        <Presenter />
+      )
     ) : location.pathname === '/display' ? (
       <Display session={session} />
     ) : (

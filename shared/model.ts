@@ -18,6 +18,7 @@ export const sceneSchema = z
       allowCustom: z.boolean().default(false),
     }),
     explanation: z.string().max(1000).default(''),
+    voteSeconds: z.number().int().min(0).max(3600).default(60),
   })
   .superRefine((s, ctx) => {
     if (new Set(s.poll.options.map((o) => o.id)).size !== s.poll.options.length)
@@ -119,6 +120,8 @@ export type Snapshot = {
   results?: Aggregate;
   joinUrl: string;
   demo: boolean;
+  managed?: boolean;
+  voteEndsAt?: number | null;
 };
 export type Vote = {
   sceneId: string;

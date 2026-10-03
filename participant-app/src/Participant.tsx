@@ -10,7 +10,6 @@ import { ArrowRight, Check, Clock3, Radio, ShieldCheck } from 'lucide-react';
 export function Participant() {
   const querySession = new URLSearchParams(location.search).get('session') || '';
   const [session, setSession] = useState(querySession);
-  const key = `paloalto:${session}`;
   const [token, setToken] = useState(() =>
     session ? localStorage.getItem(`paloalto:${session}`) || '' : '',
   );
@@ -52,16 +51,25 @@ export function Participant() {
   const s = live.snapshot || publicState;
   async function login(e: React.FormEvent) {
     e.preventDefault();
-    if (!session) return;
+    if (!session && !pin) return;
     setBusy(true);
     setError('');
     try {
-      const r = await request<{ token: string }>('', '/api/join', '', {
-        sessionId: session,
-        phone,
-        pin,
-      });
-      localStorage.setItem(key, r.token);
+      const r = await request<{ token: string; session?: string }>(
+        '',
+        !querySession || !session || s?.managed ? '/api/presentations/join' : '/api/join',
+        '',
+        {
+          sessionId: session,
+          phone,
+          pin,
+          code: pin,
+        },
+      );
+      const joined = r.session || session;
+      setSession(joined);
+      history.replaceState(null, '', `/?session=${joined}`);
+      localStorage.setItem(`paloalto:${joined}`, r.token);
       setToken(r.token);
       setPhone('');
       setPin('');
@@ -103,12 +111,14 @@ export function Participant() {
                 required
                 maxLength={40}
               />
-              <label htmlFor="pin">{fr.code}</label>
+              <label htmlFor="pin">
+                {!querySession || s?.managed || !session ? 'Code de présentation' : fr.code}
+              </label>
               <Input
                 id="pin"
                 type="password"
                 autoComplete="off"
-                placeholder="Code remis par votre enseignant"
+                placeholder="Code partagé par l’organisateur"
                 value={pin}
                 onChange={(e) => setPin(e.target.value)}
                 required
@@ -116,18 +126,14 @@ export function Participant() {
               />
               <Button
                 className="primary full"
-                disabled={busy || !session || s?.state === 'FINISHED'}
+                disabled={busy || (!!querySession && s?.state === 'FINISHED')}
               >
                 {busy ? 'Connexion…' : fr.login} <ArrowRight aria-hidden="true" />
               </Button>
             </form>
             {!session && <Notice>La présentation n’a pas encore commencé.</Notice>}
-            {s?.state === 'FINISHED' && <Notice>Cette présentation est terminée.</Notice>}
-            {s?.demo && (
-              <Notice>
-                Démo : <strong>0610000001</strong> · code <strong>demo1234</strong>. Données
-                fictives uniquement.
-              </Notice>
+            {querySession && s?.state === 'FINISHED' && (
+              <Notice>Cette présentation est terminée.</Notice>
             )}
             {error && <Notice error>{error}</Notice>}
             <p className="fine muted privacy-note">

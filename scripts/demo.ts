@@ -17,7 +17,7 @@ const child = spawn(
     env: {
       ...process.env,
       DEMO_MODE: 'true',
-      DATABASE_PATH: 'data/demo.sqlite',
+      DATABASE_PATH: process.env.DEMO_DATABASE_PATH || 'data/demo.sqlite',
       ADMIN_KEY: 'demo-presenter',
       PHONE_HASH_SECRET: 'demo-only-phone-hash-secret-not-production',
     },

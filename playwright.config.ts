@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto';
 import { defineConfig } from '@playwright/test';
 export default defineConfig({
   testDir: 'tests/e2e',
@@ -8,8 +9,9 @@ export default defineConfig({
   reporter: [['list'], ['html', { open: 'never' }]],
   webServer: {
     command: 'npm run demo',
-    url: 'http://127.0.0.1:5173',
-    reuseExistingServer: !process.env.CI,
+    url: 'http://127.0.0.1:3000/api/health',
+    reuseExistingServer: false,
+    env: { DEMO_DATABASE_PATH: `work/e2e-${randomUUID()}.sqlite` },
     timeout: 40_000,
   },
 });

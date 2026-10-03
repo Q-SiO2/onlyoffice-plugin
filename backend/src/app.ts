@@ -7,7 +7,7 @@ import helmet from 'helmet';
 import { rateLimit, ipKeyGenerator } from 'express-rate-limit';
 import { Server } from 'socket.io';
 import { z } from 'zod';
-import { actions } from '../../shared/model.ts';
+import { actions, configSchema } from '../../shared/model.ts';
 import { Store, AppError, type Identity } from './store.ts';
 import { digestToken, hashPhone, opaqueToken, secureEqual } from './security.ts';
 import type { Settings } from './settings.ts';
@@ -68,7 +68,7 @@ export function createApp(settings: Settings) {
       methods: ['GET', 'POST', 'DELETE', 'OPTIONS'],
     }),
   );
-  app.use(express.json({ limit: '32kb' }));
+  app.use(express.json({ limit: '512kb' }));
   app.use('/api', (_req, res, next) => {
     res.set('Cache-Control', 'no-store');
     next();
@@ -144,7 +144,7 @@ export function createApp(settings: Settings) {
         store.snapshot(
           id,
           socket.data.sessionId,
-          connected(id?.role === 'participant' ? id.sessionId : socket.data.sessionId),
+          connected(id?.sessionId || socket.data.sessionId),
         ),
       );
     }
@@ -181,6 +181,86 @@ export function createApp(settings: Settings) {
     if (sid && !store.session(sid)) throw new AppError(404, 'NO_SESSION', 'Session introuvable.');
     res.json(store.snapshot(undefined, sid, connected(sid)));
   });
+
+  const presentationAuth = z.object({
+    email: z.string().trim().email().max(160),
+    code: z.string().trim().min(10).max(64),
+  });
+  const setupLimit = rateLimit({
+    windowMs: 60_000,
+    limit: 10,
+    standardHeaders: 'draft-8',
+    legacyHeaders: false,
+  });
+  function managed(req: Request) {
+    const owner = requireIdentity(req, true);
+    if (!owner.sessionId)
+      throw new AppError(403, 'FORBIDDEN', 'Connexion à votre présentation requise.');
+    return owner.sessionId;
+  }
+  app.post('/api/presentations', setupLimit, (req, res) => {
+    const v = presentationAuth.extend({ title: z.string().trim().min(1).max(160) }).parse(req.body);
+    const id = store.createPresentation(v.email, v.code, v.title);
+    res.json({ token: store.presenterToken(id) });
+  });
+  app.post('/api/presentations/login', setupLimit, (req, res) => {
+    const v = presentationAuth.parse(req.body);
+    res.json({ token: store.loginPresentation(v.email, v.code) });
+  });
+  app.get('/api/admin/presentation', (req, res) => res.json(store.dashboard(managed(req))));
+  app.post('/api/admin/presentation', (req, res) => {
+    const id = managed(req),
+      v = z.object({ config: configSchema, revision: z.number().int().min(1) }).parse(req.body);
+    res.json(store.savePresentation(id, v.config, v.revision));
+    broadcast();
+  });
+  app.post('/api/admin/preview', (req, res) => {
+    const id = managed(req);
+    const v = z.object({ sceneId: z.string().max(40) }).parse(req.body);
+    store.preview(id, v.sceneId);
+    broadcast();
+    res.json({ ok: true });
+  });
+  app.post('/api/admin/voters', (req, res) => {
+    const id = managed(req),
+      v = z
+        .object({ phone: z.string().min(1).max(40), name: z.string().trim().min(1).max(160) })
+        .parse(req.body);
+    try {
+      res.json(store.addVoter(id, v.phone, v.name));
+    } catch (e) {
+      if (e instanceof AppError) throw e;
+      throw new AppError(400, 'INVALID_PHONE', 'Saisissez un numéro marocain valide.');
+    }
+    broadcast();
+  });
+  app.delete('/api/admin/voters/:id', (req, res) => {
+    const id = managed(req);
+    store.removeVoter(id, String(req.params.id));
+    res.json(store.dashboard(id));
+    broadcast();
+  });
+  app.post('/api/presentations/join', loginLimit, accountLimit, (req, res) => {
+    const v = z
+      .object({
+        phone: z.string().max(40),
+        code: z.string().max(64),
+        sessionId: z.string().uuid().optional(),
+      })
+      .parse(req.body);
+    const id =
+      store.presentationByCode(v.code) ||
+      (v.sessionId && !store.account(v.sessionId) ? v.sessionId : undefined);
+    if (!id) throw new AppError(401, 'NOT_AUTHORIZED', 'Numéro non reconnu ou code incorrect.');
+    const result = store.join(id, v.phone, v.code);
+    res.json({ token: result.token, session: id });
+    broadcast();
+  });
+  const timer = setInterval(() => {
+    if (store.tick()) broadcast();
+  }, 1000);
+  timer.unref();
+
   app.post('/api/admin/login', loginLimit, (req, res) => {
     const { key } = z.object({ key: z.string().max(200) }).parse(req.body);
     if (!secureEqual(key, settings.adminKey))
@@ -192,6 +272,9 @@ export function createApp(settings: Settings) {
   app.post('/api/admin/logout', (req, res) => {
     requireIdentity(req, true);
     admins.delete(digestToken(req.headers.authorization!.slice(7)));
+    store.db
+      .prepare('DELETE FROM presenter_tokens WHERE token_hash=?')
+      .run(digestToken(req.headers.authorization!.slice(7)));
     for (const socket of io.sockets.sockets.values())
       if (socket.handshake.auth.token === req.headers.authorization!.slice(7))
         socket.disconnect(true);
@@ -205,13 +288,7 @@ export function createApp(settings: Settings) {
   });
   app.get('/api/state', (req, res) => {
     const id = requireIdentity(req);
-    res.json(
-      store.snapshot(
-        id,
-        undefined,
-        connected(id.role === 'participant' ? id.sessionId : undefined),
-      ),
-    );
+    res.json(store.snapshot(id, undefined, connected(id.sessionId)));
   });
   app.post('/api/vote', voteLimit, (req, res) => {
     const id = requireIdentity(req);
@@ -221,15 +298,17 @@ export function createApp(settings: Settings) {
     broadcast();
   });
   app.post('/api/admin/start', (req, res) => {
-    requireIdentity(req, true);
+    const owner = requireIdentity(req, true);
+    if (owner.sessionId)
+      throw new AppError(409, 'MANAGED', 'Utilisez les commandes de votre présentation.');
     const id = store.start();
     broadcast();
     res.json({ session: id });
   });
   app.post('/api/admin/command', (req, res) => {
-    requireIdentity(req, true);
+    const owner = requireIdentity(req, true);
     const v = commandSchema.parse(req.body),
-      s = store.session();
+      s = store.session(owner.sessionId);
     if (!s) throw new AppError(404, 'NO_SESSION', 'Démarrez une session.');
     if (['reset', 'finish'].includes(v.action) && !v.confirm)
       throw new AppError(400, 'CONFIRM_REQUIRED', 'Confirmation requise.');
@@ -238,8 +317,13 @@ export function createApp(settings: Settings) {
     res.json(store.snapshot({ role: 'admin' }, s.id, connected(s.id)));
   });
   app.get('/api/admin/export', (req, res) => {
-    requireIdentity(req, true);
-    const id = typeof req.query.session === 'string' ? req.query.session : store.session()?.id;
+    const owner = requireIdentity(req, true);
+    const id =
+      typeof req.query.session === 'string'
+        ? req.query.session
+        : owner.sessionId || store.session()?.id;
+    if (owner.sessionId && id !== owner.sessionId)
+      throw new AppError(403, 'FORBIDDEN', 'Accès refusé.');
     if (!id) throw new AppError(404, 'NO_SESSION', 'Session introuvable.');
     res
       .type('text/csv')
@@ -247,7 +331,9 @@ export function createApp(settings: Settings) {
       .send(store.exportCsv(id));
   });
   app.delete('/api/admin/session/:id', (req, res) => {
-    requireIdentity(req, true);
+    const owner = requireIdentity(req, true);
+    if (owner.sessionId && String(req.params.id) !== owner.sessionId)
+      throw new AppError(403, 'FORBIDDEN', 'Accès refusé.');
     if (req.body?.confirm !== true)
       throw new AppError(400, 'CONFIRM_REQUIRED', 'Confirmation requise.');
     store.deleteSession(String(req.params.id));
@@ -283,6 +369,7 @@ export function createApp(settings: Settings) {
   }
   const close = async () => {
     clearInterval(heartbeat);
+    clearInterval(timer);
     await new Promise<void>((r) => io.close(() => r()));
     store.db.close();
   };
