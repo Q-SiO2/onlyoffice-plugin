@@ -106,3 +106,7 @@ The repo was connected but production had no source branch selected, so new push
 ## Free allowance contingency
 
 If your trial is unavailable/expired or Free credit is exhausted, no paid fallback is authorized. Rehearse the existing local LAN option in `DEPLOYMENT.md`, or postpone deployment until free access is available. Do not replace SQLite with ephemeral storage merely to make a free deployment appear successful.
+
+## Presentation studio deployment — 2026-10-03
+
+The service had no active deployment when this update began, although its source and 500 MB mounted volume still existed. Reconnecting the existing `Q-SiO2/onlyoffice-plugin@main` source restored it; no paid plan or extra resource was created. The final studio deployment is `d098dc74-57f5-4ad7-b357-53953bc0c8f1`, application commit `c67013f`, status SUCCESS. Production health, routes/CSP, new authenticated dashboard route and served JavaScript hash match passed. The hosted login showed organizer email + presentation code without console errors. The dashboard showed 28 trial days or $4.98 remaining during verification; this is a point-in-time balance. Git pushes did not themselves trigger these observed builds, so the releases were started by reconnecting the existing service source; automatic push deployment is not established by this evidence.
