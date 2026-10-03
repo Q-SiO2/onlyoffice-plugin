@@ -68,23 +68,34 @@ export function DashboardPresenter() {
     s = live.snapshot?.session === data?.session ? live.snapshot : undefined;
   useEffect(() => {
     if (!token) return;
-    let alive = true;
-    void request<Dashboard>('', '/api/admin/presentation', token)
-      .then((d) => {
-        if (alive) {
-          setData(d);
-          setDraft(d.config);
-          setDirty(false);
-        }
-      })
-      .catch((e) => {
-        if (alive) {
-          if (e.status === 401) revoke();
-          else setError(e.message);
-        }
-      });
+    let alive = true,
+      loaded = false;
+    const load = () => {
+      if (loaded) return;
+      void request<Dashboard>('', '/api/admin/presentation', token)
+        .then((d) => {
+          if (alive && !loaded) {
+            loaded = true;
+            setError('');
+            setData(d);
+            setDraft(d.config);
+            setDirty(false);
+          }
+        })
+        .catch((e) => {
+          if (alive && !loaded) {
+            if (e.status === 401) revoke();
+            else setError(e.message);
+          }
+        });
+    };
+    load();
+    const retry = setInterval(load, 10000);
+    window.addEventListener('online', load);
     return () => {
       alive = false;
+      clearInterval(retry);
+      window.removeEventListener('online', load);
     };
   }, [token, revoke]);
   useEffect(() => {
@@ -290,7 +301,10 @@ export function DashboardPresenter() {
         </div>
       </header>
       {!data || !draft ? (
-        <Notice>Chargement de votre présentation…</Notice>
+        <>
+          {error && <Notice error>{error}</Notice>}
+          <Notice>Chargement de votre présentation…</Notice>
+        </>
       ) : (
         <>
           <div className="studio-heading">

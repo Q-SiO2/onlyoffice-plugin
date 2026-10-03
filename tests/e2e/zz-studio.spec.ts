@@ -44,7 +44,17 @@ test('prepare scenes and manual voters, return later, join with shared code and 
   await admin.getByLabel('Téléphone du votant').fill('0612345678');
   await admin.getByRole('button', { name: 'Ajouter / mettre à jour' }).click();
   await expect(admin.getByRole('cell', { name: 'Étudiante autorisée', exact: true })).toBeVisible();
+  let failedLoad = false;
+  await admin.route('**/api/admin/presentation', (route) => {
+    if (!failedLoad) {
+      failedLoad = true;
+      return route.abort();
+    }
+    return route.continue();
+  });
   await admin.reload();
+  await expect(admin.getByRole('alert')).toBeVisible();
+  await admin.evaluate(() => window.dispatchEvent(new Event('online')));
   await expect(admin.getByRole('heading', { name: 'Communication — cours préparé' })).toBeVisible();
   await expect(admin.getByLabel('Question du sondage')).toHaveValue('Le silence communique-t-il ?');
   await admin.getByRole('button', { name: 'Se déconnecter', exact: true }).click();
