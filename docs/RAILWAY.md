@@ -114,3 +114,7 @@ The service had no active deployment when this update began, although its source
 ## Editor 1.2 and rehearsal reset deployment — 2026-10-06
 
 Deployment `bf6d3f81-9805-4e49-ab55-088d02621cf1` built application commit `d20fece` and reached SUCCESS on the existing service and mounted volume. HTTPS health, static routes/CSP and the served studio bundle hash match pass. The hosted login renders without browser errors. Desktop preflights for `null` and `onlyoffice://plugin`, organizer email/code login, the private feed for both saved scenes, authenticated editor WebSocket delivery and full-reset broadcast all pass against the deployed service. A temporary presentation with zero voters and zero votes was created for this API verification and removed afterward; existing presentations were untouched. No new service, paid plan or infrastructure resource was added. Native ONLYOFFICE rendering/fullscreen remains a separate rehearsal check.
+
+## Legacy desktop-origin login fix — 2026-10-06
+
+Deployment `f284f43e-56e0-41d0-82ac-417a89e6e600` / application `cfc2522` is SUCCESS on the existing service/volume. The exact file-origin alias is accepted only when the existing null/local-origin opt-in is configured. Native ONLYOFFICE preflight/login changed from 403 to 204/200 and the sidebar visibly connected and loaded its scene and asset controls. No plan, resource, voter list, votes or slide objects were changed.
