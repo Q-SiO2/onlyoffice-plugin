@@ -6,6 +6,8 @@ import { type Aggregate } from '../../shared/model.ts';
 import { fr } from './i18n.ts';
 import { Button, Card } from './ui.tsx';
 import logo from '../../onlyoffice-plugin/icon@2x.png';
+import { pollColors } from './result-style.ts';
+import { WordCloud } from './WordCloud.tsx';
 import { GlowingBadge } from './vendor/glowing-badge.tsx';
 import { CopyButton } from './vendor/copy.tsx';
 import {
@@ -57,7 +59,7 @@ export function Results({
   wordPrompt: string;
   compact?: boolean;
 }) {
-  const max = Math.max(1, ...results.words.map((w) => w.count));
+  const colors = pollColors(results.poll);
   const id = useId();
   const reduce = useReducedMotion();
   const poll = (
@@ -75,7 +77,10 @@ export function Results({
               </span>
             </div>
             <div className="bar-track">
-              <div className={`bar-fill color-${i % 3}`} style={{ width: `${p.percentage}%` }} />
+              <div
+                className="bar-fill"
+                style={{ width: `${p.percentage}%`, backgroundColor: colors[i] }}
+              />
             </div>
           </div>
         ))}
@@ -89,27 +94,7 @@ export function Results({
     <Card as="section" className="result-card">
       <div className="eyebrow">LES INDICES DE LA CLASSE</div>
       <h2>{wordPrompt}</h2>
-      <div className="word-cloud" aria-label="Fréquence des mots">
-        {results.words.length ? (
-          results.words.slice(0, 24).map((w, i) => (
-            <span
-              className={`word color-text-${i % 3}`}
-              key={w.word}
-              style={{ fontSize: `${18 + 34 * Math.sqrt(w.count / max)}px` }}
-            >
-              {w.word}
-              <sup>{w.count}</sup>
-            </span>
-          ))
-        ) : (
-          <p className="muted">Les mots apparaîtront ici.</p>
-        )}
-      </div>
-      {results.words.length > 24 && (
-        <p className="fine muted">
-          24 mots les plus fréquents. Toutes les fréquences sont conservées dans l’export CSV.
-        </p>
-      )}
+      <WordCloud words={results.words} />
     </Card>
   );
   if (!compact)

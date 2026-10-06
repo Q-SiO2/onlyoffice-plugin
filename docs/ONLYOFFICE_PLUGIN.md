@@ -1,12 +1,12 @@
 # ONLYOFFICE Desktop Presentation plugin
 
-Plugin **1.2.0** signs in with organizer email + presentation code and loads every saved scene. Scene editing, voter management and voting controls remain on `/presenter`. The editor reads a private aggregate-only feed; it does not fetch the voter roster.
+Plugin **1.2.1** signs in with organizer email + presentation code and loads every saved scene. Scene editing, voter management and voting controls remain on `/presenter`. The editor reads a private aggregate-only feed; it does not fetch the voter roster.
 
 ## Build and install
 
 Run `npm run build` then `npm run package:plugin`. The archive `dist/paloalto-live.plugin` has `config.json` at its root. Open a presentation, choose **Plugins → Plugin Manager → My plugins → Install plugin manually**, select the archive, then open **Palo Alto Live**.
 
-The manifest uses `panelRight`, `EditorsSupport: ["slide"]`, `initDataType: "none"`, local HTML and the stable GUID `asc.{A7E2C42A-3184-4E8B-9477-893BC54F8591}`. Minimum editor version is **9.3.0**, because persistent bindings use documented object names. This computer has 9.3.1.8.
+The manifest uses `panelRight`, `EditorsSupport: ["slide"]`, `initDataType: "none"`, local HTML and the stable GUID `asc.{A7E2C42A-3184-4E8B-9477-893BC54F8591}`. Minimum editor version is **9.3.0**, because persistent bindings use documented object names. The latest native login was verified on 9.4.0.129.
 
 The official Windows custom-plugin location is:
 
@@ -25,6 +25,8 @@ Close ONLYOFFICE normally before replacing this folder. Back up its contents fir
 5. Keep the plugin open and connected. Poll and cloud graphics update as votes arrive, including assets for scenes other than the selected tray scene. Scene and presentation resets clear the corresponding pictures.
 
 Charts are transparent PNGs without a branded frame or question heading; the slide owns the surrounding design. A white-text option supports dark slides. Each scene/type uses stable PNG dimensions as frequencies change, so replacement does not stretch the picture. Website downloads default to cropped transparent PNGs, with an optional full 1600×900 branded export.
+
+Poll colors shuffle within `#ffc83d`, `#3452f5`, `#ffb8c6`, `#f65a45`. The choice IDs and labels seed the shuffle, so votes, resets and reloads preserve the same assignments on the website and in slide graphics. Clouds alone use regular Ink Free from the local computer, with Segoe Print / Comic Sans / cursive fallbacks; Windows font files are not redistributed. Words follow a spiral inside a scalloped cloud silhouette, with bright blue, coral, pink and gold lettering and a soft blue backdrop. Both the website SVG and slide PNG measure glyph and font extents before placement. PNGs preserve 34px horizontal / 24px vertical gutters and a 32px minimum font size. Browser clouds use 18px minimum text and 14px / 12px gutters, with full labels and frequencies in accessible descriptions and tooltips; exceptionally long labels abbreviate in the middle on narrow screens. Crowded clouds show fewer words with an overflow count; all frequencies remain available in CSV. Transparent graphics retain transparency outside the cloud silhouette.
 
 Clicking **Ajouter** adds an independent asset; external drag directly from the iframe to the slide canvas is not implemented. Once added, positioning uses the editor's normal drag handles.
 
