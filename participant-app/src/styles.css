@@ -728,6 +728,17 @@ legend {
   min-height: 32px;
   box-shadow: none;
 }
+.rehearsal-controls {
+  display: grid;
+  gap: 12px;
+  border-top: 1px solid var(--pa-line);
+  margin-top: 22px;
+  padding-top: 18px;
+}
+.rehearsal-controls button {
+  min-height: 44px;
+  white-space: normal;
+}
 .share-card .button-stack {
   margin-top: 22px;
 }

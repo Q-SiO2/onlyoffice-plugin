@@ -819,11 +819,12 @@ export function DashboardPresenter() {
                       <p>{s.scene.explanation}</p>
                     </div>
                   )}
-                  <div className="destructive">
+                  <div className="rehearsal-controls">
                     <p className="fine muted">
                       Après les essais, effacez les votes avant le lancement réel.
                     </p>
                     <Button
+                      className="secondary full"
                       disabled={busy || !live.connected || !s?.scene || s.state === 'FINISHED'}
                       onClick={() =>
                         setConfirm({
@@ -842,6 +843,7 @@ export function DashboardPresenter() {
                       Réinitialiser cette scène
                     </Button>
                     <Button
+                      className="secondary full"
                       disabled={busy || !live.connected || !s?.scene || dirty}
                       onClick={() =>
                         setConfirm({
@@ -869,6 +871,7 @@ export function DashboardPresenter() {
                       Effacer les essais et revenir au début
                     </Button>
                     <Button
+                      className="danger full"
                       disabled={busy || s?.state === 'FINISHED' || !s?.scene}
                       onClick={() =>
                         setConfirm({
