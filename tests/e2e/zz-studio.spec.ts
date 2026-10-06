@@ -122,7 +122,7 @@ test('prepare scenes and manual voters, return later, join with shared code and 
   await phone.getByRole('button', { name: 'Envoyer ma réponse' }).click();
   await expect(admin.getByText(/Résultats affichés · 1 réponses/)).toBeVisible({ timeout: 12000 });
   await mkdir('work', { recursive: true });
-  await admin.screenshot({ path: 'work/dashboard-live.png', fullPage: false });
+  await admin.screenshot({ path: 'work/dashboard-live.png', fullPage: true });
   await admin.getByRole('button', { name: 'Réinitialiser cette scène', exact: true }).click();
   await admin.getByRole('button', { name: 'Annuler', exact: true }).click();
   await expect(admin.getByText(/Résultats affichés · 1 réponses/)).toBeVisible();
