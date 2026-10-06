@@ -1,5 +1,5 @@
 export const pollPalette = ['#ffc83d', '#3452f5', '#ffb8c6', '#f65a45'] as const;
-export const cloudFont = '"Ink Free", "Segoe Print", "Comic Sans MS", cursive';
+export const cloudFont = '"Comic Neue", cursive';
 export const wordPalette = ['#3452f5', '#f65a45', '#e83e72', '#d18b00'];
 
 // Seed the shuffle from the choices, never their vote counts. Every view and PNG
@@ -28,7 +28,7 @@ export type CloudPlacement = {
   bounds: { x: number; y: number; width: number; height: number };
 };
 
-// Use the same lobes for the visible silhouette and the word placement boundary.
+// An invisible organic boundary keeps the words clustered without a backdrop.
 const cloudLobes = [
   [0.23, 0.57, 0.22, 0.28],
   [0.45, 0.38, 0.26, 0.34],
@@ -36,12 +36,6 @@ const cloudLobes = [
   [0.83, 0.59, 0.15, 0.24],
   [0.5, 0.64, 0.43, 0.25],
 ];
-export const cloudShapePath = cloudLobes
-  .map(
-    ([cx, cy, rx, ry]) =>
-      `M ${cx + rx} ${cy} a ${rx} ${ry} 0 1 0 ${-2 * rx} 0 a ${rx} ${ry} 0 1 0 ${2 * rx} 0 Z`,
-  )
-  .join(' ');
 export function cloudContains(x: number, y: number) {
   return cloudLobes.some(([cx, cy, rx, ry]) => ((x - cx) / rx) ** 2 + ((y - cy) / ry) ** 2 <= 1);
 }

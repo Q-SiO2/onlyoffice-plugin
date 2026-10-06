@@ -83,7 +83,14 @@ test('poll and handwritten cloud render consistently without crowded words or cl
       .locator('.word')
       .first()
       .evaluate((word) => getComputedStyle(word).fontFamily),
-  ).toContain('Ink Free');
+  ).toContain('Comic Neue');
+  expect(
+    await page.evaluate(async () => {
+      const faces = await document.fonts.load('400 40px "Comic Neue"', 'Écoute réciprocité');
+      return faces.length > 0 && faces.every((face) => face.status === 'loaded');
+    }),
+  ).toBe(true);
+  await expect(page.locator('.cloud-graphic path')).toHaveCount(0);
   expect(
     await page
       .locator('.word')
@@ -108,6 +115,34 @@ test('poll and handwritten cloud render consistently without crowded words or cl
   });
   for (const [kind, url] of Object.entries(pngs))
     await writeFile(`work/${kind}-aesthetic.png`, Buffer.from(url.split(',')[1], 'base64'));
+  // A slide cloud must contain only lettering: transparent space between words,
+  // including the old silhouette's interior, stays completely transparent.
+  const onlyLettering = await page.evaluate(async () => {
+    const { resultsPng } = Reflect.get(window, '__aesthetic');
+    const url = await resultsPng(
+      { total: 1, poll: [], words: [{ word: 'Écoute', count: 1 }] },
+      '',
+      'words',
+      { chartOnly: true, crop: false, height: 560, transparent: true },
+    );
+    const image = new Image();
+    image.src = url;
+    await image.decode();
+    const canvas = document.createElement('canvas');
+    canvas.width = image.width;
+    canvas.height = image.height;
+    const ctx = canvas.getContext('2d')!;
+    ctx.drawImage(image, 0, 0);
+    return (
+      image.width === 1600 &&
+      image.height === 560 &&
+      ctx.getImageData(400, 260, 1, 1).data[3] === 0 &&
+      ctx.getImageData(800, 150, 1, 1).data[3] === 0 &&
+      ctx.getImageData(1300, 300, 1, 1).data[3] === 0 &&
+      ctx.getImageData(600, 210, 400, 100).data.some((value, i) => i % 4 === 3 && value > 0)
+    );
+  });
+  expect(onlyLettering).toBe(true);
   for (const winner of ['communication', 'écoute']) {
     await expect(page.locator('.word').first().locator('title')).toContainText(winner);
     const centered = await page

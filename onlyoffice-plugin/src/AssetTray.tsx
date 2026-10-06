@@ -239,7 +239,7 @@ export function AssetTray({ bridge }: { bridge: AssetBridge }) {
     <div className="asset-tray">
       <header className="asset-tray-header">
         <Brand small />
-        <span className="asset-version">v1.2.2</span>
+        <span className="asset-version">v1.2.3</span>
       </header>
       <main>
         <div className="eyebrow">VOS GRAPHIQUES SUR LA DIAPOSITIVE</div>

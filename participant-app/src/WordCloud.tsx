@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
+import '@fontsource/comic-neue/400.css';
 import {
   cloudFont,
-  cloudShapePath,
   layoutCloud,
   measureCloudWord,
   wordPalette,
@@ -71,12 +71,6 @@ export function WordCloud({ words }: { words: { word: string; count: number }[] 
             aria-label="Nuage de mots et fréquences"
           >
             <desc>{words.map(({ word, count }) => `${word} : ${count}`).join(' ; ')}</desc>
-            <path
-              d={cloudShapePath}
-              transform={`translate(12 12) scale(${(cloud?.width ?? width) - 24} ${(cloud?.height ?? height) - 24})`}
-              fill="#e9eeff"
-              aria-hidden="true"
-            />
             {cloud?.items.map((item, i) => (
               <text
                 key={item.word}

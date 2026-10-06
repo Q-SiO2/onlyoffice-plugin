@@ -12,7 +12,7 @@ test('editor email login loads all prepared scenes; live poll and cloud fills su
   const archive = unzipSync(await readFile('dist/paloalto-live.plugin'));
   const manifest = JSON.parse(new TextDecoder().decode(archive['config.json']));
   expect(manifest.variations[0].type).toBe('panelRight');
-  expect(manifest.version).toBe('1.2.2');
+  expect(manifest.version).toBe('1.2.3');
   expect(manifest.minVersion).toBe('9.3.0');
   expect(manifest.variations[0].EditorsSupport).toEqual(['slide']);
   for (const file of [
@@ -26,9 +26,13 @@ test('editor email login loads all prepared scenes; live poll and cloud fills su
     'icon.png',
     'vendor/licenses/UNLUMEN-MIT.txt',
     'vendor/licenses/MANROPE-OFL.txt',
+    'vendor/licenses/COMIC-NEUE-OFL.txt',
   ])
     expect(archive[file]).toBeTruthy();
   expect(Object.keys(archive).some((file) => file.endsWith('.woff2'))).toBe(true);
+  expect(
+    Object.keys(archive).some((file) => /comic-neue-latin-400-normal.*\.woff2$/.test(file)),
+  ).toBe(true);
   await page.addInitScript(() => {
     // Older desktop schemes omit secure-context randomUUID but support getRandomValues.
     Object.defineProperty(crypto, 'randomUUID', { value: undefined, configurable: true });
@@ -148,6 +152,13 @@ test('editor email login loads all prepared scenes; live poll and cloud fills su
   );
   // Exercise the legacy file:// / Origin:null networking path in a real browser context.
   await page.goto(pathToFileURL(resolve('work/plugin-harness.html')).href);
+  // The packaged font must load from file:// too, independently of OS fonts.
+  expect(
+    await page.evaluate(async () => {
+      const faces = await document.fonts.load('400 40px "Comic Neue"', 'Écoute réciprocité');
+      return faces.length > 0 && faces.every((face) => face.status === 'loaded');
+    }),
+  ).toBe(true);
   const pageRequests: { path: string; auth?: string }[] = [];
   page.on('request', (r) => {
     if (r.url().includes('/api/'))

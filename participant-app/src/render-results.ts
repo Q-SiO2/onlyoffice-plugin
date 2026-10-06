@@ -1,8 +1,8 @@
 import type { Aggregate } from '../../shared/model.ts';
+import '@fontsource/comic-neue/400.css';
 import logo from '../../onlyoffice-plugin/icon@2x.png';
 import {
   cloudFont,
-  cloudShapePath,
   layoutCloud,
   measureCloudWord,
   pollColors,
@@ -105,14 +105,6 @@ export async function resultsPng(
     const cloud = layoutCloud(results.words, area, (word, size) =>
       measureCloudWord(ctx, word, size),
     );
-    if (results.words.length) {
-      ctx.save();
-      ctx.translate(area.x, area.y);
-      ctx.scale(area.width, area.height);
-      ctx.fillStyle = options.textColor === '#ffffff' ? '#ffffff18' : '#e9eeff';
-      ctx.fill(new Path2D(cloudShapePath));
-      ctx.restore();
-    }
     cloud.items.forEach((item, i) => {
       ctx.font = `${item.size}px ${cloudFont}`;
       ctx.fillStyle =
@@ -136,10 +128,7 @@ export async function resultsPng(
     contentBottom = cloud.hidden
       ? canvas.height
       : cloud.items.length
-        ? Math.max(
-            top + area.height * 0.89,
-            ...cloud.items.map((item) => item.bounds.y + item.bounds.height),
-          ) + 40
+        ? Math.max(...cloud.items.map((item) => item.bounds.y + item.bounds.height)) + 40
         : top + (canvas.height - top - 85) / 2 + 40;
   }
   if (options.chartOnly && options.crop !== false) {
