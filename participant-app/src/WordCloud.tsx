@@ -46,7 +46,7 @@ export function WordCloud({ words }: { words: { word: string; count: number }[] 
         words,
         { x: 12, y: 12, width: width - 24, height: height - 24 },
         (word, size) => measureCloudWord(ctx, labels.get(word)!, size),
-        { minSize: 18, baseSize: 24, growth: 30, gapX: 14, gapY: 12 },
+        { minSize: 18, baseSize: 24, growth: 30, gapX: 6, gapY: 5 },
       );
       if (!cancelled)
         setCloud({

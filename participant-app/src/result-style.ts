@@ -50,14 +50,10 @@ export function measureCloudWord(ctx: CanvasRenderingContext2D, word: string, si
   ctx.font = `${size}px ${cloudFont}`;
   const glyph = ctx.measureText(word);
   return {
-    left: Math.max(0, glyph.actualBoundingBoxLeft),
-    right: Math.max(glyph.width, glyph.actualBoundingBoxRight),
-    ascent: Math.max(size * 0.75, glyph.actualBoundingBoxAscent, glyph.fontBoundingBoxAscent || 0),
-    descent: Math.max(
-      size * 0.25,
-      glyph.actualBoundingBoxDescent,
-      glyph.fontBoundingBoxDescent || 0,
-    ),
+    left: Math.max(0, glyph.actualBoundingBoxLeft) + 2,
+    right: Math.max(glyph.width, glyph.actualBoundingBoxRight) + 2,
+    ascent: Math.max(size * 0.5, glyph.actualBoundingBoxAscent) + 2,
+    descent: Math.max(size * 0.08, glyph.actualBoundingBoxDescent) + 2,
   };
 }
 
@@ -71,14 +67,14 @@ export function layoutCloud(
     minSize: 32,
     baseSize: 40,
     growth: 52,
-    gapX: 34,
-    gapY: 24,
+    gapX: 12,
+    gapY: 9,
   },
 ): { items: CloudPlacement[]; hidden: number } {
   const { minSize, baseSize, growth, gapX, gapY } = sizing;
   const max = Math.max(1, ...words.map((word) => word.count));
   let best: CloudPlacement[] = [];
-  const candidates = words.slice(0, 24);
+  const candidates = [...words].sort((a, b) => b.count - a.count).slice(0, 24);
   for (let step = 0; candidates.length && step <= 12; step++) {
     const scale = 1 - step * 0.05;
     const items: CloudPlacement[] = [];
@@ -99,13 +95,12 @@ export function layoutCloud(
       const width = left + right;
       const height = ascent + descent;
       if (width > area.width || height > area.height) continue;
-      for (let n = 0; n < 1600; n++) {
+      // Pin the winning word to the center; pack every other word outward from it.
+      for (let n = 0; n < (index ? 1600 : 1); n++) {
         const radius = Math.sqrt(n / 1600);
         const angle = (n + index * 19) * 2.399963229728653;
-        const anchorX = index ? 0.12 + ((index * 0.61803398875) % 1) * 0.76 : 0.5;
-        const anchorY = index ? 0.13 + ((index * 0.75487766625) % 1) * 0.69 : 0.53;
-        const x = area.x + area.width * (anchorX + radius * 0.5 * Math.cos(angle)) - width / 2;
-        const y = area.y + area.height * (anchorY + radius * 0.5 * Math.sin(angle)) - height / 2;
+        const x = area.x + area.width * (0.5 + radius * 0.5 * Math.cos(angle)) - width / 2;
+        const y = area.y + area.height * (0.5 + radius * 0.5 * Math.sin(angle)) - height / 2;
         if (
           x < area.x ||
           y < area.y ||

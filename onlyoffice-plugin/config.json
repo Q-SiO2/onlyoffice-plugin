@@ -1,7 +1,7 @@
 {
   "name": "Palo Alto Live",
   "guid": "asc.{A7E2C42A-3184-4E8B-9477-893BC54F8591}",
-  "version": "1.2.1",
+  "version": "1.2.2",
   "minVersion": "9.3.0",
   "baseUrl": "",
   "variations": [

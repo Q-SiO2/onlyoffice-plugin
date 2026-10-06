@@ -70,10 +70,10 @@ test('cloud keeps every glyph inside its frame and separate, even with long word
         if (item === other) continue;
         const b = other.bounds;
         assert.ok(
-          box.x + box.width + 33.9 <= b.x ||
-            b.x + b.width + 33.9 <= box.x ||
-            box.y + box.height + 23.9 <= b.y ||
-            b.y + b.height + 23.9 <= box.y,
+          box.x + box.width + 11.9 <= b.x ||
+            b.x + b.width + 11.9 <= box.x ||
+            box.y + box.height + 8.9 <= b.y ||
+            b.y + b.height + 8.9 <= box.y,
           'Words must retain a gutter on at least one axis',
         );
       }
@@ -85,4 +85,28 @@ test('cloud keeps every glyph inside its frame and separate, even with long word
     }),
     { items: [], hidden: 0 },
   );
+});
+
+test('the most selected word stays centered and a new winner replaces it during live updates', () => {
+  const area = { x: 85, y: 40, width: 1430, height: 435 };
+  const words = [
+    { word: 'écoute', count: 4 },
+    { word: 'confiance', count: 18 },
+    { word: 'respect', count: 9 },
+  ];
+  const measure = (word: string, size: number) => ({
+    left: 2,
+    right: word.length * size * 0.45,
+    ascent: size * 0.8,
+    descent: size * 0.2,
+  });
+  for (const winner of ['confiance', 'écoute']) {
+    const cloud = layoutCloud(words, area, measure);
+    assert.equal(cloud.items[0].word, winner);
+    const box = cloud.items[0].bounds;
+    assert.ok(Math.abs(box.x + box.width / 2 - area.x - area.width / 2) < 0.001);
+    assert.ok(Math.abs(box.y + box.height / 2 - area.y - area.height / 2) < 0.001);
+    assert.equal(cloud.items.length, words.length);
+    words[0].count = 25;
+  }
 });

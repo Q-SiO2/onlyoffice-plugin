@@ -12,7 +12,7 @@ test('editor email login loads all prepared scenes; live poll and cloud fills su
   const archive = unzipSync(await readFile('dist/paloalto-live.plugin'));
   const manifest = JSON.parse(new TextDecoder().decode(archive['config.json']));
   expect(manifest.variations[0].type).toBe('panelRight');
-  expect(manifest.version).toBe('1.2.1');
+  expect(manifest.version).toBe('1.2.2');
   expect(manifest.minVersion).toBe('9.3.0');
   expect(manifest.variations[0].EditorsSupport).toEqual(['slide']);
   for (const file of [

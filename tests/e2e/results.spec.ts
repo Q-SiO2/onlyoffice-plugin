@@ -108,6 +108,40 @@ test('poll and handwritten cloud render consistently without crowded words or cl
   });
   for (const [kind, url] of Object.entries(pngs))
     await writeFile(`work/${kind}-aesthetic.png`, Buffer.from(url.split(',')[1], 'base64'));
+  for (const winner of ['communication', 'écoute']) {
+    await expect(page.locator('.word').first().locator('title')).toContainText(winner);
+    const centered = await page
+      .locator('.word')
+      .first()
+      .evaluate((word) => {
+        const svg = (word as SVGTextElement).ownerSVGElement!;
+        const width = svg.viewBox.baseVal.width;
+        const height = svg.viewBox.baseVal.height;
+        const ctx = document.createElement('canvas').getContext('2d')!;
+        ctx.font = `${word.getAttribute('font-size')}px ${getComputedStyle(word).fontFamily}`;
+        const label = Array.from(word.childNodes)
+          .filter((node) => node.nodeType === Node.TEXT_NODE)
+          .map((node) => node.textContent)
+          .join('')
+          .trim();
+        const glyph = ctx.measureText(label);
+        const x =
+          Number(word.getAttribute('x')) +
+          (glyph.actualBoundingBoxRight - glyph.actualBoundingBoxLeft) / 2;
+        const y =
+          Number(word.getAttribute('y')) +
+          (glyph.actualBoundingBoxDescent - glyph.actualBoundingBoxAscent) / 2;
+        return Math.abs(x - width / 2) < 8 && Math.abs(y - height / 2) < 8;
+      });
+    expect(centered).toBe(true);
+    await page.evaluate(() => {
+      const { result, render } = Reflect.get(window, '__aesthetic');
+      result.words = result.words.map((word: { word: string; count: number }) =>
+        word.word === 'écoute' ? { ...word, count: 35 } : word,
+      );
+      render();
+    });
+  }
   await page.evaluate(() => {
     const { result, render } = Reflect.get(window, '__aesthetic');
     result.total = 32;
@@ -131,10 +165,31 @@ test('poll and handwritten cloud render consistently without crowded words or cl
     await expect
       .poll(() =>
         page.locator('.word-cloud').evaluate((cloud) => {
-          const frame = cloud.getBoundingClientRect();
-          const boxes = Array.from(cloud.querySelectorAll('.word')).map((word) =>
-            word.getBoundingClientRect(),
-          );
+          const frame = cloud.querySelector('.cloud-graphic')!.getBoundingClientRect();
+          const ctx = document.createElement('canvas').getContext('2d')!;
+          // SVG line boxes include empty font leading. Check the painted glyphs,
+          // which must stay separate even when those invisible line boxes touch.
+          const boxes = Array.from(cloud.querySelectorAll<SVGTextElement>('.word')).map((word) => {
+            ctx.font = `${word.getAttribute('font-size')}px ${getComputedStyle(word).fontFamily}`;
+            const label = Array.from(word.childNodes)
+              .filter((node) => node.nodeType === Node.TEXT_NODE)
+              .map((node) => node.textContent)
+              .join('')
+              .trim();
+            const glyph = ctx.measureText(label);
+            const x = Number(word.getAttribute('x'));
+            const y = Number(word.getAttribute('y'));
+            const matrix = word.getScreenCTM()!;
+            const start = new DOMPoint(
+              x - glyph.actualBoundingBoxLeft,
+              y - glyph.actualBoundingBoxAscent,
+            ).matrixTransform(matrix);
+            const end = new DOMPoint(
+              x + glyph.actualBoundingBoxRight,
+              y + glyph.actualBoundingBoxDescent,
+            ).matrixTransform(matrix);
+            return { left: start.x, right: end.x, top: start.y, bottom: end.y };
+          });
           return boxes.every(
             (a, i) =>
               a.left >= frame.left &&
@@ -142,10 +197,10 @@ test('poll and handwritten cloud render consistently without crowded words or cl
               boxes.every(
                 (b, j) =>
                   i === j ||
-                  a.right + 8 <= b.left ||
-                  b.right + 8 <= a.left ||
-                  a.bottom + 8 <= b.top ||
-                  b.bottom + 8 <= a.top,
+                  a.right + 2 <= b.left ||
+                  b.right + 2 <= a.left ||
+                  a.bottom + 2 <= b.top ||
+                  b.bottom + 2 <= a.top,
               ),
           );
         }),
@@ -187,10 +242,10 @@ test('poll and handwritten cloud render consistently without crowded words or cl
               const c = other.bounds;
               return (
                 i === j ||
-                b.x + b.width + 33.9 <= c.x ||
-                c.x + c.width + 33.9 <= b.x ||
-                b.y + b.height + 23.9 <= c.y ||
-                c.y + c.height + 23.9 <= b.y
+                b.x + b.width + 11.9 <= c.x ||
+                c.x + c.width + 11.9 <= b.x ||
+                b.y + b.height + 8.9 <= c.y ||
+                c.y + c.height + 8.9 <= b.y
               );
             })
           );
