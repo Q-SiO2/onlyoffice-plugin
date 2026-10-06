@@ -4,6 +4,7 @@ import { randomUUID } from 'node:crypto';
 test('prepare scenes and manual voters, return later, join with shared code and publish automatically', async ({
   browser,
 }) => {
+  test.setTimeout(60000);
   const context = await browser.newContext({ viewport: { width: 1360, height: 960 } }),
     phoneContext = await browser.newContext({ viewport: { width: 390, height: 844 } });
   const admin = await context.newPage(),
@@ -122,6 +123,26 @@ test('prepare scenes and manual voters, return later, join with shared code and 
   await expect(admin.getByText(/Résultats affichés · 1 réponses/)).toBeVisible({ timeout: 12000 });
   await mkdir('work', { recursive: true });
   await admin.screenshot({ path: 'work/dashboard-live.png', fullPage: false });
+  await admin.getByRole('button', { name: 'Réinitialiser cette scène', exact: true }).click();
+  await admin.getByRole('button', { name: 'Annuler', exact: true }).click();
+  await expect(admin.getByText(/Résultats affichés · 1 réponses/)).toBeVisible();
+  await admin.getByRole('button', { name: 'Réinitialiser cette scène', exact: true }).click();
+  await admin.getByRole('button', { name: 'Confirmer', exact: true }).click();
+  await expect(admin.getByText(/Scène en cours · 0 réponses/)).toBeVisible();
+  await admin
+    .getByRole('button', { name: 'Effacer les essais et revenir au début', exact: true })
+    .click();
+  await admin.getByRole('button', { name: 'Confirmer', exact: true }).click();
+  await expect(admin.getByText(/En attente · 0 réponses/)).toBeVisible();
+  await expect(phone.getByRole('heading', { name: 'Vous êtes connecté.' })).toBeVisible();
+  await admin.getByRole('tab', { name: /1. Scènes/ }).click();
+  await expect(admin.getByLabel('Question du sondage')).toBeEnabled();
+  await admin.getByRole('tab', { name: /3. Présenter/ }).click();
+  await admin.getByRole('button', { name: 'Ouvrir le vote', exact: true }).click();
+  await phone.getByRole('radio', { name: /Oui/ }).check();
+  await phone.getByRole('button', { name: 'Silence', exact: true }).click();
+  await phone.getByRole('button', { name: 'Envoyer ma réponse' }).click();
+  await expect(admin.getByText(/Résultats affichés · 1 réponses/)).toBeVisible({ timeout: 12000 });
   await admin.getByRole('button', { name: 'Scène suivante', exact: true }).click();
   await expect(admin.getByRole('heading', { name: 'La relation', exact: true })).toBeVisible();
   await admin.getByRole('tab', { name: /1. Scènes/ }).click();

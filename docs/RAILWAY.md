@@ -94,7 +94,7 @@ Download the generated private output through the protected volume/shell workflo
 1. Confirm `https://YOUR-SERVICE.up.railway.app/api/health` returns `ok: true` and `demo: false`.
 2. Open `/presenter`, authenticate with the configured key and start a session. The same domain must appear in the QR code.
 3. Join from an actual phone with an authorized number and personal code. Open/close a vote, show results, and move to another scene without logging in again.
-4. Point the asset tray to the HTTPS domain/public link. Add its graphics, drag/resize them, then publish/hide/reset on the website. Rehearse native fill refresh, including fullscreen, using a deck copy. Keep linked graphics ungrouped and the plugin open/connected. No admin key is entered in the plugin.
+4. Sign into the plugin with organizer email + presentation code. Choose each prepared scene, add its graphics, drag/resize them, then vote/reset on the website. Rehearse native fill refresh, including fullscreen, using a deck copy. Keep linked graphics ungrouped and the plugin open/connected. No deployment master key is entered in the plugin.
 5. Confirm the data survives an intentional service restart, verify available credits, and export results after the class. Never run the synthetic simulator against the real service; it intentionally refuses production mode.
 
 The deployed app offers participant pages, not video streaming. Presentation video stays local in ONLYOFFICE, so audience connections mostly carry small state/vote messages.

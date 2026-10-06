@@ -138,7 +138,7 @@ export async function resultsPng(
     }
     if (results.words.length > 24) {
       ctx.font = '18px "Manrope Variable", Arial';
-      ctx.fillStyle = '#62627b';
+      ctx.fillStyle = options.textColor || '#62627b';
       ctx.fillText(
         '24 mots les plus fréquents · toutes les fréquences dans l’export CSV',
         85,
@@ -147,7 +147,7 @@ export async function resultsPng(
     }
     if (!results.words.length) {
       ctx.font = '32px "Manrope Variable", Arial';
-      ctx.fillStyle = '#62627b';
+      ctx.fillStyle = options.textColor || '#62627b';
       ctx.fillText('Aucun mot sélectionné.', 85, 360);
     }
     contentBottom = results.words.length > 24 ? 900 : results.words.length ? y + 25 : 390;

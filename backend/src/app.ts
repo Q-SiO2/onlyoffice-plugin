@@ -134,7 +134,11 @@ export function createApp(settings: Settings) {
   function broadcast() {
     for (const socket of io.sockets.sockets.values()) {
       const id = socket.data.identity as Identity | undefined;
-      if (id && !store.validateIdentity(id)) {
+      if (
+        id &&
+        (!store.validateIdentity(id) ||
+          (id.role === 'admin' && !identity(socket.handshake.auth.token || '')))
+      ) {
         socket.emit('revoked');
         socket.disconnect(true);
         continue;
@@ -147,13 +151,23 @@ export function createApp(settings: Settings) {
           connected(id?.sessionId || socket.data.sessionId),
         ),
       );
+      if (socket.data.editor && id?.role === 'admin' && id.sessionId)
+        socket.emit('assets', store.editorAssets(id.sessionId));
     }
   }
   io.use((socket, next) => {
-    const auth = socket.handshake.auth as { token?: string; sessionId?: string; public?: boolean };
+    const auth = socket.handshake.auth as {
+      token?: string;
+      sessionId?: string;
+      public?: boolean;
+      editor?: boolean;
+    };
     const id = auth.token ? identity(auth.token) : undefined;
     if (!id && !(auth.public && auth.sessionId && store.session(auth.sessionId)))
       return next(new Error('AUTH_REQUIRED'));
+    if (auth.editor && (id?.role !== 'admin' || !id.sessionId))
+      return next(new Error('AUTH_REQUIRED'));
+    socket.data.editor = !!auth.editor;
     socket.data.identity = id;
     socket.data.sessionId = auth.sessionId;
     next();
@@ -208,6 +222,14 @@ export function createApp(settings: Settings) {
     res.json({ token: store.loginPresentation(v.email, v.code) });
   });
   app.get('/api/admin/presentation', (req, res) => res.json(store.dashboard(managed(req))));
+  app.get('/api/editor/assets', (req, res) => res.json(store.editorAssets(managed(req))));
+  app.post('/api/admin/reset-presentation', (req, res) => {
+    const id = managed(req),
+      v = z.object({ expectedVersion: z.number().int(), confirm: z.boolean() }).parse(req.body);
+    if (!v.confirm) throw new AppError(400, 'CONFIRM_REQUIRED', 'Confirmation requise.');
+    res.json(store.resetPresentation(id, v.expectedVersion));
+    broadcast();
+  });
   app.post('/api/admin/presentation', (req, res) => {
     const id = managed(req),
       v = z.object({ config: configSchema, revision: z.number().int().min(1) }).parse(req.body);

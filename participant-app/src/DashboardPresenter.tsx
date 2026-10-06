@@ -820,6 +820,54 @@ export function DashboardPresenter() {
                     </div>
                   )}
                   <div className="destructive">
+                    <p className="fine muted">
+                      Après les essais, effacez les votes avant le lancement réel.
+                    </p>
+                    <Button
+                      disabled={busy || !live.connected || !s?.scene || s.state === 'FINISHED'}
+                      onClick={() =>
+                        setConfirm({
+                          message:
+                            'Effacer tous les votes de cette scène ? Les participants pourront répondre de nouveau. Les autres scènes sont conservées.',
+                          run: () =>
+                            void operate(async () => {
+                              await command('reset');
+                              setMessage(
+                                'Votes de cette scène effacés. Vous pouvez rouvrir le vote.',
+                              );
+                            }),
+                        })
+                      }
+                    >
+                      Réinitialiser cette scène
+                    </Button>
+                    <Button
+                      disabled={busy || !live.connected || !s?.scene || dirty}
+                      onClick={() =>
+                        setConfirm({
+                          message:
+                            'Effacer les votes de TOUTES les scènes et revenir au début ? Cette suppression est définitive. Vos scènes, le code et la liste des votants sont conservés.',
+                          run: () =>
+                            void operate(async () => {
+                              const d = await request<Dashboard>(
+                                '',
+                                '/api/admin/reset-presentation',
+                                token,
+                                { expectedVersion: s!.version, confirm: true },
+                              );
+                              setData(d);
+                              setDraft(d.config);
+                              setDirty(false);
+                              setSelected(0);
+                              setMessage(
+                                'Essais effacés. Présentation prête au lancement, depuis la première scène.',
+                              );
+                            }),
+                        })
+                      }
+                    >
+                      Effacer les essais et revenir au début
+                    </Button>
                     <Button
                       disabled={busy || s?.state === 'FINISHED' || !s?.scene}
                       onClick={() =>
@@ -844,8 +892,8 @@ export function DashboardPresenter() {
                     Ouvrir l’écran de projection ↗
                   </a>
                   <p className="fine muted">
-                    Dans le plugin, utilisez ce même lien participant pour lier les graphiques à
-                    cette présentation.
+                    Dans le plugin, connectez-vous avec votre e-mail et ce code, puis choisissez
+                    chaque scène à placer sur vos diapositives.
                   </p>
                   <Button
                     disabled={busy}

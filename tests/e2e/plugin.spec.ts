@@ -5,14 +5,14 @@ import { pathToFileURL } from 'node:url';
 import { unzipSync } from 'fflate';
 import { randomUUID } from 'node:crypto';
 import type { Snapshot, Action } from '../../shared/model.ts';
-test('asset tray is read-only, follows website results and inserts transparent movable images', async ({
+test('editor email login loads all prepared scenes; live poll and cloud fills survive reset, reconnect and session changes', async ({
   page,
 }) => {
   await page.setViewportSize({ width: 360, height: 420 });
   const archive = unzipSync(await readFile('dist/paloalto-live.plugin'));
   const manifest = JSON.parse(new TextDecoder().decode(archive['config.json']));
   expect(manifest.variations[0].type).toBe('panelRight');
-  expect(manifest.version).toBe('1.1.0');
+  expect(manifest.version).toBe('1.2.0');
   expect(manifest.minVersion).toBe('9.3.0');
   expect(manifest.variations[0].EditorsSupport).toEqual(['slide']);
   for (const file of [
@@ -30,6 +30,8 @@ test('asset tray is read-only, follows website results and inserts transparent m
     expect(archive[file]).toBeTruthy();
   expect(Object.keys(archive).some((file) => file.endsWith('.woff2'))).toBe(true);
   await page.addInitScript(() => {
+    // Older desktop schemes omit secure-context randomUUID but support getRandomValues.
+    Object.defineProperty(crypto, 'randomUUID', { value: undefined, configurable: true });
     const images: {
       src: string;
       width: number;
@@ -58,10 +60,18 @@ test('asset tray is read-only, follows website results and inserts transparent m
       },
     ];
     const slide = { AddObject: (o: unknown) => objects.push(o), GetAllShapes: () => objects };
+    const otherSlide = {
+      AddObject: (o: unknown) => unrelated.push(o as (typeof unrelated)[number]),
+      GetAllShapes: () => unrelated,
+    };
+    let currentSlide = slide;
+    Reflect.set(window, '__selectSlide', (index: number) => {
+      currentSlide = index ? otherSlide : slide;
+    });
     const api = {
       GetPresentation: () => ({
-        GetCurrentSlide: () => slide,
-        GetAllSlides: () => [slide, { GetAllShapes: () => unrelated }],
+        GetCurrentSlide: () => currentSlide,
+        GetAllSlides: () => [slide, otherSlide],
         GetWidth: () => 9144000,
         GetHeight: () => 5143500,
       }),
@@ -155,14 +165,24 @@ test('asset tray is read-only, follows website results and inserts transparent m
     expect(response.ok).toBe(true);
     return response.json() as Promise<T>;
   }
-  const admin = (await api<{ token: string }>('/api/admin/login', '', { key: 'demo-presenter' }))
-    .token;
+
+  const email = `plugin-${randomUUID()}@example.test`,
+    code = `PLUGIN-${randomUUID()}`;
+  const admin = (
+    await api<{ token: string }>('/api/presentations', '', {
+      email,
+      code,
+      title: 'Prepared editor presentation',
+    })
+  ).token;
+  const config = JSON.parse(await readFile('shared/scenes.json', 'utf8'));
+  config.scenes = config.scenes.slice(0, 2);
+  config.scenes.forEach((s: { voteSeconds: number }) => (s.voteSeconds = 0));
+  await api('/api/admin/presentation', admin, { config, revision: 1 });
+  await api('/api/admin/voters', admin, { phone: '0610000042', name: 'Editor tester' });
   let state = await api<Snapshot>('/api/state', admin);
-  if (!state.session || state.state === 'FINISHED') {
-    await api('/api/admin/start', admin, {});
-    state = await api('/api/state', admin);
-  }
   async function command(action: Action, sceneId?: string) {
+    state = await api<Snapshot>('/api/state', admin);
     state = await api<Snapshot>('/api/admin/command', admin, {
       action,
       sceneId,
@@ -170,17 +190,135 @@ test('asset tray is read-only, follows website results and inserts transparent m
       confirm: true,
     });
   }
-  if (state.state === 'VOTING_OPEN') await command('close');
-  await command('activate', 'silence');
-  await command('reset');
-  await page.getByLabel('Lien de la présentation').fill(state.joinUrl);
-  await page.getByRole('button', { name: 'Charger les graphiques' }).click();
-  await expect(page.getByText('Maquette · en attente des résultats publiés')).toBeVisible();
-  await expect(page.getByLabel('Clé présentateur')).toHaveCount(0);
-  await expect(page.getByRole('button', { name: 'Ouvrir le vote', exact: true })).toHaveCount(0);
-  await expect(page.getByRole('button', { name: 'Démarrer une session' })).toHaveCount(0);
+  const jsErrors: string[] = [];
+  page.on('pageerror', (e) => jsErrors.push(e.message));
+  await page.getByText('Adresse du serveur', { exact: true }).click();
+  await page.getByLabel('Serveur', { exact: true }).fill('http://localhost:5173');
+  await page.getByLabel('E-mail de l’organisateur').fill(email);
+  await page.getByLabel('Code de présentation').fill('WRONG-PRESENTATION-CODE');
+  await page.getByRole('button', { name: 'Se connecter', exact: true }).click();
+  await expect(page.getByRole('alert')).toContainText('E-mail ou code incorrect');
+  await page.getByLabel('Code de présentation').fill(code);
+  await page.getByRole('button', { name: 'Se connecter', exact: true }).click();
+  await expect(page.getByLabel('Scène à placer')).toBeVisible();
   await expect(page.getByRole('button', { name: 'Ajouter le sondage' })).toBeEnabled();
-  // The editor host can lock body/document scrolling. Wheel and keyboard must scroll our panel.
+  expect(state.state).toBe('WAITING');
+  expect(await api<{ editable: boolean }>('/api/admin/presentation', admin)).toMatchObject({
+    editable: true,
+  });
+  await expect(page.getByRole('button', { name: 'Ouvrir le vote', exact: true })).toHaveCount(0);
+  const first = config.scenes[0],
+    second = config.scenes[1];
+  const count = () => page.evaluate(() => Reflect.get(window, '__pluginTest').images.length);
+  const src = (index: number) =>
+    page.evaluate((i) => Reflect.get(window, '__pluginTest').images[i].src, index);
+  async function add(kind: string, expected: number) {
+    await page.getByRole('button', { name: `Ajouter ${kind}`, exact: true }).click();
+    await expect.poll(count).toBe(expected);
+  }
+  // Prepare BOTH scenes before launching any vote; the selected tray scene never controls the server.
+  await add('le sondage', 1);
+  await add('le nuage de mots', 2);
+  await add('le QR code', 3);
+  await page.getByLabel('Scène à placer').selectOption(second.id);
+  await page.evaluate(() => Reflect.get(window, '__selectSlide')(1));
+  await add('le sondage', 4);
+  await add('le nuage de mots', 5);
+  expect((await api<Snapshot>('/api/state', admin)).scene?.id).toBe(first.id);
+  const baseline = await page.evaluate(() =>
+    Reflect.get(window, '__pluginTest').images.map((i: { src: string }) => i.src),
+  );
+  await page.evaluate(() => {
+    Reflect.get(window, '__pluginTest').images.forEach((image: object, i: number) =>
+      Object.assign(image, {
+        x: 123456 + i,
+        y: 654321 + i,
+        width: 2000000 + i,
+        height: 631250 + i,
+        rotation: 17 + i,
+      }),
+    );
+    Reflect.set(window, '__selectedAsset', 'existing-text');
+  });
+  const geometry = () =>
+    page.evaluate(() =>
+      Reflect.get(window, '__pluginTest').images.map(
+        (i: { x: number; y: number; width: number; height: number; rotation: number }) => ({
+          x: i.x,
+          y: i.y,
+          width: i.width,
+          height: i.height,
+          rotation: i.rotation,
+        }),
+      ),
+    );
+  const beforeGeometry = await geometry();
+  await command('activate', first.id);
+  await command('open');
+  const participant = (
+    await api<{ token: string }>('/api/presentations/join', '', { phone: '0610000042', code })
+  ).token;
+  async function vote() {
+    const scene = state.scene!;
+    await api('/api/vote', participant, {
+      sceneId: scene.id,
+      epoch: state.epoch,
+      optionIds: [scene.poll.options[0].id],
+      words: scene.words.options.slice(0, 1),
+      requestId: randomUUID(),
+    });
+  }
+  await vote();
+  // First-scene assets must update while the tray is showing the second scene, BEFORE closing.
+  await expect.poll(() => src(0)).not.toBe(baseline[0]);
+  await expect.poll(() => src(1)).not.toBe(baseline[1]);
+  expect(await src(3)).toBe(baseline[3]);
+  const firstPoll = await src(0),
+    firstCloud = await src(1);
+  await command('close');
+  await command('results');
+  await command('next');
+  await command('open');
+  await vote();
+  await expect.poll(() => src(3)).not.toBe(baseline[3]);
+  await expect.poll(() => src(4)).not.toBe(baseline[4]);
+  expect(await src(0)).toBe(firstPoll);
+  expect(await src(1)).toBe(firstCloud);
+  // A scene-only reset leaves the first scene intact.
+  await command('reset');
+  await expect.poll(() => src(3)).toBe(baseline[3]);
+  await expect.poll(() => src(4)).toBe(baseline[4]);
+  expect(await src(0)).toBe(firstPoll);
+  await command('open');
+  await vote();
+  await expect.poll(() => src(3)).not.toBe(baseline[3]);
+  // Lose the socket while all-scenes reset happens: reconciliation must catch up after reconnect.
+  await page.context().setOffline(true);
+  state = await api<Snapshot>('/api/state', admin);
+  await api('/api/admin/reset-presentation', admin, {
+    expectedVersion: state.version,
+    confirm: true,
+  });
+  await page.context().setOffline(false);
+  await expect.poll(() => src(0), { timeout: 15000 }).toBe(baseline[0]);
+  await expect.poll(() => src(1)).toBe(baseline[1]);
+  await expect.poll(() => src(3)).toBe(baseline[3]);
+  await expect.poll(() => src(4)).toBe(baseline[4]);
+  expect(await geometry()).toEqual(beforeGeometry);
+  expect(await count()).toBe(5);
+  expect(await page.evaluate(() => Reflect.get(window, '__selectedAsset'))).toBe('existing-text');
+  // Reload restores the scoped token, not the password, and every scene remains available.
+  await page.reload();
+  await expect(page.getByLabel('Scène à placer')).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Ajouter le sondage' })).toBeEnabled();
+  expect(await page.getByLabel('Scène à placer').locator('option').count()).toBe(2);
+  // Our harness loses its simulated deck on reload; real documents retain their shapes.
+  await add('le sondage', 1);
+  await add('le nuage de mots', 2);
+  const lightPoll = await src(0);
+  await page.getByLabel('Texte blanc pour une diapositive sombre').check();
+  await expect(page.locator('.asset-preview.dark')).toHaveCount(2);
+  await expect.poll(() => src(0)).not.toBe(lightPoll);
   await page.mouse.move(180, 300);
   await page.mouse.wheel(0, 1200);
   await expect.poll(() => page.locator('#root').evaluate((el) => el.scrollTop)).toBeGreaterThan(0);
@@ -192,175 +330,44 @@ test('asset tray is read-only, follows website results and inserts transparent m
       page.locator('#root').evaluate((el) => el.scrollHeight - el.clientHeight - el.scrollTop),
     )
     .toBeLessThan(2);
-  await page.screenshot({ path: 'docs/screenshots/plugin-scroll-bottom.png', fullPage: false });
-  const before = await page.getByAltText('Aperçu du sondage').getAttribute('src');
-  // Place a preview, then mimic the presenter moving/resizing/rotating it on a designed slide.
-  await page.getByRole('button', { name: 'Ajouter le sondage', exact: true }).click();
-  await expect(page.getByRole('status').filter({ hasText: 'Image sélectionnée' })).toBeVisible();
-  await page.evaluate(() => {
-    const image = Reflect.get(window, '__pluginTest').images[0];
-    Object.assign(image, { x: 123456, y: 654321, width: 2000000, height: 631250, rotation: 17 });
-    Reflect.set(window, '__selectedAsset', 'existing-text');
-  });
-  await command('open');
-  const participant = (
-    await api<{ token: string }>('/api/join', '', {
-      sessionId: state.session,
-      phone: '0610000042',
-      pin: 'demo1234',
+  await page.screenshot({ path: 'docs/screenshots/plugin-scroll-bottom.png' });
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+  // Same scene IDs in another presentation must not overwrite this deck's linked shapes.
+  const oldSources = await page.evaluate(() =>
+    Reflect.get(window, '__pluginTest').images.map((i: { src: string }) => i.src),
+  );
+  const otherCode = `PLUGIN-${randomUUID()}`;
+  const otherToken = (
+    await api<{ token: string }>('/api/presentations', '', {
+      email,
+      code: otherCode,
+      title: 'Other presentation',
     })
   ).token;
-  await api('/api/vote', participant, {
-    sceneId: 'silence',
-    epoch: state.epoch,
-    optionIds: ['oui'],
-    words: ['Silence', 'Regard'],
-    requestId: randomUUID(),
-  });
-  await command('close');
-  await expect(page.getByText('Résultats publiés', { exact: true })).toHaveCount(0);
-  await command('results');
-  await expect(page.getByText('Résultats publiés', { exact: true })).toBeVisible();
-  await expect
-    .poll(() => page.getByAltText('Aperçu du sondage').getAttribute('src'))
-    .not.toBe(before);
-  await expect
-    .poll(() => page.evaluate(() => Reflect.get(window, '__pluginTest').images[0].src))
-    .not.toBe(before);
-  const preserved = await page.evaluate(() => {
-    const image = Reflect.get(window, '__pluginTest').images[0];
-    return {
-      x: image.x,
-      y: image.y,
-      width: image.width,
-      height: image.height,
-      rotation: image.rotation,
-      count: Reflect.get(window, '__pluginTest').images.length,
-      selection: Reflect.get(window, '__selectedAsset'),
-    };
-  });
-  expect(preserved).toEqual({
-    x: 123456,
-    y: 654321,
-    width: 2000000,
-    height: 631250,
-    rotation: 17,
-    count: 1,
-    selection: 'existing-text',
-  });
-  // Adding a second copy intentionally adds an object; live refresh must not do so.
-  await page.getByRole('button', { name: 'Ajouter le sondage', exact: true }).click();
-  await expect(page.getByRole('status').filter({ hasText: 'Image sélectionnée' })).toBeVisible();
-  const result = (await page.evaluate(() => {
-    const t = Reflect.get(window, '__pluginTest');
-    return {
-      count: t.images.length,
-      objects: t.objects.length,
-      img: t.images[1],
-      uniqueNames: new Set(t.images.map((i: { name: string }) => i.name)).size,
-    };
-  })) as {
-    count: number;
-    objects: number;
-    uniqueNames: number;
-    img: { src: string; width: number; height: number; x: number; y: number };
-  };
-  expect(result.count).toBe(2);
-  expect(result.objects).toBe(3);
-  expect(result.uniqueNames).toBe(2);
-  expect(result.img.src).toMatch(/^data:image\/png;base64,/);
-  expect(result.img.width / result.img.height).toBeGreaterThan(16 / 9);
-  expect(result.img.width).toBeLessThan(9144000 * 0.5);
-  expect(result.img.x).toBeGreaterThan(0);
-  expect(await page.evaluate(() => Reflect.get(window, '__selectedAsset').src)).toBe(
-    result.img.src,
+  await api('/api/admin/presentation', otherToken, { config, revision: 1 });
+  await page.getByRole('button', { name: 'Changer de présentation' }).click();
+  await page.getByLabel('Code de présentation').fill(otherCode);
+  await page.getByRole('button', { name: 'Se connecter', exact: true }).click();
+  await expect(page.getByRole('button', { name: 'Ajouter le sondage' })).toBeEnabled();
+  expect(
+    await page.evaluate(() =>
+      Reflect.get(window, '__pluginTest').images.map((i: { src: string }) => i.src),
+    ),
+  ).toEqual(oldSources);
+  await add('le sondage', 3);
+  const names = await page.evaluate(() =>
+    Reflect.get(window, '__pluginTest').images.map((i: { name: string }) => i.name),
   );
-  const pixels = await page.evaluate(async (src) => {
-    const image = new Image();
-    image.src = src;
-    await image.decode();
-    const canvas = document.createElement('canvas');
-    canvas.width = image.width;
-    canvas.height = image.height;
-    const ctx = canvas.getContext('2d')!;
-    ctx.drawImage(image, 0, 0);
-    return {
-      corner: ctx.getImageData(0, 0, 1, 1).data[3],
-      content: ctx.getImageData(100, 100, 1, 1).data[3],
-      height: image.height,
-    };
-  }, result.img.src);
-  expect(pixels.corner).toBe(0);
-  expect(pixels.content).toBeGreaterThan(0);
-  expect(pixels.height).toBeLessThan(900);
-  await page.getByRole('button', { name: 'Ajouter le QR code' }).click();
-  await expect
-    .poll(() => page.evaluate(() => Reflect.get(window, '__pluginTest').images.length))
-    .toBe(3);
-  const ratio = await page.evaluate(() => {
-    const img = Reflect.get(window, '__pluginTest').images[2];
-    return img.width / img.height;
-  });
-  expect(ratio).toBe(1);
-  await page.getByRole('button', { name: 'Ajouter le nuage de mots', exact: true }).click();
-  await expect
-    .poll(() => page.evaluate(() => Reflect.get(window, '__pluginTest').images.length))
-    .toBe(4);
-  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
-  await expect(page.locator('.brand-icon')).toHaveJSProperty('naturalWidth', 56);
-  expect(pageRequests.length).toBeGreaterThan(0);
-  expect(pageRequests.every((r) => r.path.includes('/api/public/state') && !r.auth)).toBe(true);
-  const darkBefore = await page.evaluate(() => Reflect.get(window, '__pluginTest').images[0].src);
-  await page.getByLabel('Texte blanc pour une diapositive sombre').check();
-  await expect(page.locator('.asset-preview.dark')).toHaveCount(2);
-  await expect
-    .poll(() => page.evaluate(() => Reflect.get(window, '__pluginTest').images[0].src))
-    .not.toBe(darkBefore);
-  const darkPoll = await page.evaluate(() => Reflect.get(window, '__pluginTest').images[0].src);
-  await page.setViewportSize({ width: 360, height: 1200 });
-  await page.locator('#root').focus();
-  await page.keyboard.press('Control+Home');
-  await page.locator('#root').evaluate((el) => el.scrollTo(0, 0));
-  await page.screenshot({ path: 'docs/screenshots/asset-tray.png', fullPage: false });
-  await command('hide');
-  await expect
-    .poll(() => page.evaluate(() => Reflect.get(window, '__pluginTest').images[0].src))
-    .not.toBe(darkPoll);
-  await command('results');
-  await expect
-    .poll(() => page.evaluate(() => Reflect.get(window, '__pluginTest').images[0].src))
-    .toBe(darkPoll);
-  await command('next');
-  await expect(page.getByText('Contenu et relation', { exact: true })).toBeVisible();
-  await expect(page.getByText('Résultats publiés', { exact: true })).toHaveCount(0);
-  await page.getByRole('button', { name: 'Ajouter le sondage', exact: true }).click();
-  await expect
-    .poll(() => page.evaluate(() => Reflect.get(window, '__pluginTest').images.length))
-    .toBe(5);
-  expect(await page.evaluate(() => Reflect.get(window, '__pluginTest').images[0].src)).toBe(
-    darkPoll,
-  );
-  // Reuse the same deck in a fresh session. Scene bindings persist, and QR follows the new join URL.
-  const oldQr = await page.evaluate(() => Reflect.get(window, '__pluginTest').images[2].src);
-  await command('finish');
-  await api('/api/admin/start', admin, {});
-  state = await api<Snapshot>('/api/state', admin);
-  await command('activate', 'silence');
-  await page.getByRole('button', { name: 'Changer le lien' }).click();
-  await page.getByLabel('Lien de la présentation').fill('http://localhost:5173');
-  await page.getByRole('button', { name: 'Charger les graphiques' }).click();
-  await expect
-    .poll(() => page.evaluate(() => Reflect.get(window, '__pluginTest').images[2].src))
-    .not.toBe(oldQr);
-  await expect
-    .poll(() => page.evaluate(() => Reflect.get(window, '__pluginTest').images[0].src))
-    .not.toBe(darkPoll);
-  expect(await page.evaluate(() => Reflect.get(window, '__pluginTest').images.length)).toBe(5);
-  expect(await page.evaluate(() => Reflect.get(window, '__pluginTest').objects.length)).toBe(6);
+  expect(new Set(names).size).toBe(3);
+  expect(names[0]).toContain(`:${state.session}:`);
+  expect(names[2]).not.toContain(`:${state.session}:`);
   expect(await page.evaluate(() => Reflect.get(window, '__overlappingCommands'))).toBeUndefined();
   await expect(page.getByRole('alert')).toHaveCount(0);
-  await page.setViewportSize({ width: 360, height: 420 });
-  await page.locator('#root').focus();
-  await page.keyboard.press('Control+Home');
-  await page.screenshot({ path: 'docs/screenshots/plugin-harness.png', fullPage: false });
+  expect(jsErrors).toEqual([]);
+  expect(
+    pageRequests.filter((r) => r.path.includes('/api/editor/assets')).every((r) => !!r.auth),
+  ).toBe(true);
+  await page.setViewportSize({ width: 360, height: 1100 });
+  await page.locator('#root').evaluate((el) => el.scrollTo(0, 0));
+  await page.screenshot({ path: 'docs/screenshots/asset-tray.png' });
 });

@@ -129,8 +129,25 @@ try {
     requestId: randomUUID(),
   });
   assert.equal((await api('/api/state', returned)).results.total, 1);
+  const editor = await api('/api/editor/assets', returned);
+  assert.equal(editor.session, initial.session);
+  assert.equal(editor.scenes[0].results.total, 1);
+  assert.equal(editor.scenes.length, 2);
+  const reset = await api('/api/admin/reset-presentation', returned, {
+    expectedVersion: editor.version,
+    confirm: true,
+  });
+  assert.equal(reset.editable, true);
+  assert.equal(reset.voters.length, 1);
+  assert.equal(reset.code, 'COMPILED-PRESENTATION-CODE');
+  const cleared = await api('/api/editor/assets', returned);
+  assert.ok(
+    cleared.scenes.every(
+      (s: { epoch: number; results: { total: number } }) => s.epoch === 1 && s.results.total === 0,
+    ),
+  );
   console.log(
-    'PASS: compiled CLI import, production Node startup, static routes/CSP, legacy login/vote, dashboard creation and saved questions, manual roster, email/code return login and shared-code voting.',
+    'PASS: compiled CLI import, production Node startup, static routes/CSP, legacy login/vote, dashboard preparation, roster, email/code login, shared-code voting, all-scene editor feed and rehearsal reset.',
   );
 } finally {
   child.kill();

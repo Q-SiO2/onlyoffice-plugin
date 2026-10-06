@@ -1,5 +1,5 @@
 export type ImageKind = 'poll' | 'words' | 'qr';
-export type AssetBinding = { base: string; sceneId: string };
+export type AssetBinding = { base: string; session: string; sceneId: string };
 export type AssetBridge = {
   insert: (image: string, kind: ImageKind, binding: AssetBinding) => Promise<void>;
   sync: (images: Record<ImageKind, string>, binding: AssetBinding) => Promise<number>;
@@ -44,14 +44,20 @@ export function createAssetBridge(): AssetBridge {
     return pending;
   }
   function prefix(binding: AssetBinding) {
-    return `PaloAltoLive:v1:${encodeURIComponent(binding.base)}:`;
+    return `PaloAltoLive:v2:${encodeURIComponent(binding.base)}:${binding.session}:`;
   }
   return {
     async insert(image, kind, binding) {
       const decoded = new Image();
       decoded.src = image;
       await decoded.decode();
-      const name = `${prefix(binding)}${kind === 'qr' ? 'join' : binding.sceneId}:${kind}:${crypto.randomUUID()}`;
+      // Some desktop plugin schemes do not expose randomUUID (secure-context-only).
+      const uuid =
+        crypto.randomUUID?.() ||
+        Array.from(crypto.getRandomValues(new Uint8Array(16)), (n) =>
+          n.toString(16).padStart(2, '0'),
+        ).join('');
+      const name = `${prefix(binding)}${kind === 'qr' ? 'join' : binding.sceneId}:${kind}:${uuid}`;
       await command<void>(
         { paloaltoAsset: { image, name, ratio: decoded.width / decoded.height } },
         // ONLYOFFICE serializes this function: use only Api and Asc.scope inside it.
@@ -74,7 +80,7 @@ export function createAssetBridge(): AssetBridge {
               Api.CreateBlipFill(asset.image, 'stretch'),
               Api.CreateStroke(0, Api.CreateNoFill()),
             );
-            if (typeof graphic.SetName !== 'function' || !graphic.SetName(asset.name))
+            if (typeof graphic.SetName !== 'function' || graphic.SetName(asset.name) === false)
               return {
                 ok: false,
                 error: 'Les graphiques liés nécessitent ONLYOFFICE 9.3 ou plus récent.',
@@ -91,12 +97,20 @@ export function createAssetBridge(): AssetBridge {
     },
     sync(images, binding) {
       return command<number>(
-        { paloaltoSync: { images, prefix: prefix(binding), sceneId: binding.sceneId } },
+        {
+          paloaltoSync: {
+            images,
+            prefix: prefix(binding),
+            legacyPrefix: `PaloAltoLive:v1:${encodeURIComponent(binding.base)}:`,
+            sceneId: binding.sceneId,
+          },
+        },
         function () {
           try {
             const input = Asc.scope.paloaltoSync as {
               images: Record<'poll' | 'words' | 'qr', string>;
               prefix: string;
+              legacyPrefix: string;
               sceneId: string;
             };
             let updated = 0;
@@ -109,13 +123,18 @@ export function createAssetBridge(): AssetBridge {
                     error: 'Les graphiques liés nécessitent ONLYOFFICE 9.3 ou plus récent.',
                   };
                 const name = shape.GetName();
-                if (!name.startsWith(input.prefix)) continue;
-                const tag = name.slice(input.prefix.length).split(':');
+                const modern = name.startsWith(input.prefix);
+                if (!modern && !name.startsWith(input.legacyPrefix)) continue;
+                const tag = name
+                  .slice(modern ? input.prefix.length : input.legacyPrefix.length)
+                  .split(':');
                 const kind = tag[1];
                 if (tag.length !== 3 || !['poll', 'words', 'qr'].includes(kind)) continue;
+                // v1 QR objects have no session binding and cannot safely be rebound.
+                if (!modern && kind === 'qr') continue;
                 if (tag[0] !== (kind === 'qr' ? 'join' : input.sceneId)) continue;
                 const image = input.images[kind as 'poll' | 'words' | 'qr'];
-                if (!shape.SetFill(Api.CreateBlipFill(image, 'stretch')))
+                if (shape.SetFill(Api.CreateBlipFill(image, 'stretch')) === false)
                   return {
                     ok: false,
                     error: 'Actualisation impossible. Vérifiez le mode édition.',

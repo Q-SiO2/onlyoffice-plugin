@@ -8,6 +8,7 @@ import {
   transition,
   type Action,
   type Config,
+  type EditorAssets,
   type Snapshot,
   type State,
   type Vote,
@@ -144,7 +145,10 @@ export class Store {
       config: JSON.parse(s.config) as Config,
       editable:
         s.state === 'WAITING' &&
-        !this.db.prepare('SELECT 1 FROM event_log WHERE session_id=?').get(id),
+        (!this.db.prepare('SELECT 1 FROM event_log WHERE session_id=?').get(id) ||
+          this.db
+            .prepare('SELECT action FROM event_log WHERE session_id=? ORDER BY id DESC LIMIT 1')
+            .get(id)?.action === 'restart'),
       voters: this.db
         .prepare(
           'SELECT participant_id,phone_sealed,name FROM presentation_voters WHERE session_id=? ORDER BY name,participant_id',
@@ -169,6 +173,12 @@ export class Store {
       throw new AppError(409, 'STALE_DRAFT', 'Modifié ailleurs. Rechargez avant de sauvegarder.');
     config = configSchema.parse(config);
     this.transaction(() => {
+      const epochs = new Map(
+        this.db
+          .prepare('SELECT scene_id,epoch FROM scene_rounds WHERE session_id=?')
+          .all(id)
+          .map((r) => [String(r.scene_id), Number(r.epoch)]),
+      );
       this.db.prepare('DELETE FROM scene_rounds WHERE session_id=?').run(id);
       this.db
         .prepare(
@@ -177,8 +187,8 @@ export class Store {
         .run(JSON.stringify(config), id);
       for (const scene of config.scenes)
         this.db
-          .prepare('INSERT INTO scene_rounds(session_id,scene_id) VALUES(?,?)')
-          .run(id, scene.id);
+          .prepare('INSERT INTO scene_rounds(session_id,scene_id,epoch) VALUES(?,?,?)')
+          .run(id, scene.id, epochs.get(scene.id) || 0);
       this.db
         .prepare('UPDATE presentation_accounts SET revision=revision+1 WHERE session_id=?')
         .run(id);
@@ -224,6 +234,50 @@ export class Store {
     this.db
       .prepare('UPDATE presentation_sessions SET scene_index=?,version=version+1 WHERE id=?')
       .run(index, id);
+  }
+  editorAssets(id: string): EditorAssets {
+    const s = this.session(id),
+      a = this.account(id);
+    if (!s || !a) throw new AppError(404, 'NO_PRESENTATION', 'Présentation introuvable.');
+    const config = JSON.parse(s.config) as Config;
+    return {
+      session: id,
+      title: config.title,
+      version: s.version,
+      revision: a.revision,
+      state: s.state,
+      activeSceneId: config.scenes[s.scene_index]?.id || null,
+      joinUrl: `${this.settings.publicUrl}/?session=${id}`,
+      scenes: config.scenes.map((scene) => ({
+        scene: { ...scene, explanation: '' },
+        epoch: Number(
+          this.db
+            .prepare('SELECT epoch FROM scene_rounds WHERE session_id=? AND scene_id=?')
+            .get(id, scene.id)?.epoch || 0,
+        ),
+        results: aggregate(scene, this.votes(s, scene.id)),
+      })),
+    };
+  }
+  resetPresentation(id: string, expectedVersion: number) {
+    this.dashboard(id); // A managed owner is required; the HTTP route scopes the ID.
+    this.transaction(() => {
+      const s = this.session(id)!;
+      if (s.version !== expectedVersion)
+        throw new AppError(409, 'STALE_STATE', 'État modifié. Réessayez.');
+      this.db.prepare('DELETE FROM responses WHERE session_id=?').run(id);
+      this.db.prepare('UPDATE scene_rounds SET epoch=epoch+1 WHERE session_id=?').run(id);
+      this.db
+        .prepare(
+          "UPDATE presentation_sessions SET state='WAITING',scene_index=0,version=version+1,finished_at=NULL WHERE id=?",
+        )
+        .run(id);
+      this.db
+        .prepare('UPDATE presentation_accounts SET vote_ends_at=NULL WHERE session_id=?')
+        .run(id);
+      this.log(id, 'restart', 'WAITING');
+    });
+    return this.dashboard(id);
   }
   tick() {
     const due = this.db

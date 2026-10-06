@@ -1,6 +1,6 @@
 # Palo Alto Live
 
-An audience interaction system for **ONLYOFFICE Desktop Editors Presentation Editor**. Students scan one QR code, sign in once with their Moroccan mobile number and personal class code, and stay on the same page through every scene. The website controls sessions, scenes, voting and publication. The editor plugin is a read-only asset tray: add transparent poll/word graphics and a QR, then drag and resize them on your own slides. Published results refresh linked graphics while the plugin is open and connected.
+An audience interaction system for **ONLYOFFICE Desktop Editors Presentation Editor**. Students scan one QR code, sign in once with their Moroccan mobile number and shared presentation code, and stay on the same page through every scene. The website controls sessions, scenes, voting and publication. The editor plugin is a read-only asset tray: add transparent poll/word graphics and a QR, then drag and resize them on your own slides. Live votes refresh linked graphics while the plugin is open and connected.
 
 Built for an academic presentation with restrained Memphis geometry, French mobile screens, accessible controls, and readable projector results. Scenes are configurable; the included two Palo Alto scenes are examples, not a five-scene constraint.
 
@@ -14,7 +14,7 @@ No local server is required. Open [the presenter dashboard](https://paloalto-liv
 2. **Votants**: enter names and phone numbers directly in the table. No CSV or individual student codes are needed for new presentations.
 3. **Présenter**: share the QR and presentation code. Open voting after each scene; the countdown closes voting and publishes results. Advance to the next scene when ready.
 
-Return using your organizer email and presentation code. Voters use their allowed phone number and that code. The organizer email is an identifier, not an email-verification or delivery service; keep it private because it accompanies the shared code for administrative login. Questions lock when the presentation starts. The ONLYOFFICE plugin stays a read-only asset tray; paste the specific participant link so its graphics follow this presentation.
+Return using your organizer email and presentation code. Voters use their allowed phone number and that code. The organizer email is an identifier, not an email-verification or delivery service; keep it private because it accompanies the shared code for administrative login. Questions lock when the presentation starts. The ONLYOFFICE plugin signs in with the same organizer email + code and lets you place graphics for every saved scene before launching votes. In **Présenter**, use **Réinitialiser cette scène** for a single retry, or **Effacer les essais et revenir au début** before the real launch. The full reset clears votes, returns to scene one and unlocks preparation while retaining code and voters; confirmation is required.
 
 ## Quick start — isolated local demo
 
@@ -44,7 +44,7 @@ Persistent SQLite sessions; Socket.IO updates with fresh reconnect snapshots; se
 ```mermaid
 flowchart LR
   O[Browser administration dashboard] -->|Authenticated HTTP commands| B[Node + Express]
-  E[ONLYOFFICE asset tray] -->|Public read-only state| B
+  E[ONLYOFFICE asset tray] -->|Scoped all-scene aggregate feed| B
   P[Phones] -->|Whitelist + code / votes| B
   B --> D[(SQLite WAL)]
   B -->|Socket.IO role-specific snapshots| O
@@ -86,9 +86,9 @@ npm run package:plugin
 1. Open a presentation in ONLYOFFICE Desktop Editors.
 2. Choose **Plugins → Plugin Manager → My plugins → Install plugin manually**.
 3. Select `dist/paloalto-live.plugin`.
-4. Choose **Plugins → Palo Alto Live**. Paste your public participation link or site address (demo: `http://localhost:5173`) and choose **Charger les graphiques**. No admin key is needed here.
-5. Activate a scene on `/presenter`. Select a slide in edit mode, add its poll, word cloud or QR, then drag/resize the selected graphic with native ONLYOFFICE handles.
-6. Keep the plugin open and connected. Publishing/hiding/resetting updates the active scene's linked graphics without changing geometry. Keep them ungrouped and their object names intact. Other scenes keep their last picture until activated again. Downloaded PNGs and older plugin images remain snapshots.
+4. Choose **Plugins → Palo Alto Live**. Sign in with the same organizer email + presentation code. Railway is the default server; local tests can expand **Adresse du serveur**.
+5. Choose any saved **Scène à placer** in the plugin. Select a slide in edit mode, add its poll, word cloud or QR, then drag/resize the selected graphic with native ONLYOFFICE handles.
+6. Keep the plugin open and connected. Live votes and resets update every scene's linked graphics without changing geometry. Keep them ungrouped and their object names intact. New bindings include the presentation ID. Downloaded PNGs remain snapshots; recreate old QR assets once.
 
 This workspace's plugin was also installed through the official per-user plugin folder for local validation. The `.plugin` archive contains `config.json` at its root and bundles the SDK locally for use without a CDN.
 

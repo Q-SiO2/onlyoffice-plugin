@@ -87,6 +87,14 @@ test('prepared presentation, roster, login and server countdown survive restart;
     assert.equal(store.snapshot(undefined, a).results?.total, 1);
     store.addVoter(a, '0612345678', 'Again');
     assert.equal(store.identity(voter), undefined);
+    store.resetPresentation(a, store.session(a)!.version);
+    store.db.close();
+    store = new Store({ ...settings, dbPath: file });
+    assert.equal(store.session(a)!.state, 'WAITING');
+    assert.ok(store.dashboard(a).editable);
+    assert.equal(store.dashboard(a).code, 'PRESENTATION-CODE-A');
+    assert.equal(store.dashboard(a).voters[0].name, 'Again');
+    assert.ok(store.editorAssets(a).scenes.every((s) => s.epoch === 1 && s.results.total === 0));
   } finally {
     store.db.close();
     for (const suffix of ['', '-wal', '-shm']) rmSync(file + suffix, { force: true });
@@ -160,6 +168,146 @@ test('HTTP dashboard credentials and all presenter operations stay scoped; publi
     );
     await api('/api/admin/logout', at, {});
     assert.equal((await api('/api/admin/presentation', at)).status, 401);
+  } finally {
+    await server.close();
+  }
+});
+
+test('private all-scene editor feed and confirmed rehearsal reset preserve roster and reject stale votes', async () => {
+  const server = createApp(settings);
+  await new Promise<void>((r) => server.http.listen(0, '127.0.0.1', r));
+  const port = (server.http.address() as { port: number }).port;
+  const api = async (path: string, token = '', body?: unknown) => {
+    const response = await fetch(`http://127.0.0.1:${port}${path}`, {
+      method: body === undefined ? 'GET' : 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body: body === undefined ? undefined : JSON.stringify(body),
+    });
+    return { status: response.status, data: await response.json() };
+  };
+  try {
+    const a = server.store.createPresentation('editor@example.test', 'EDITOR-PRESENTATION-A', 'A');
+    const b = server.store.createPresentation('other@example.test', 'EDITOR-PRESENTATION-B', 'B');
+    const token = server.store.presenterToken(a),
+      other = server.store.presenterToken(b);
+    const config = structuredClone(server.store.config);
+    config.scenes.forEach((scene) => {
+      scene.voteSeconds = 0;
+      scene.explanation = 'PRIVATE NOTES';
+    });
+    server.store.savePresentation(a, config, 1);
+    server.store.savePresentation(b, config, 1);
+    server.store.addVoter(a, '0612345678', 'PRIVATE NAME');
+    const voter = server.store.join(a, '0612345678', 'EDITOR-PRESENTATION-A').token;
+    const identity = server.store.identity(voter)!;
+    if (identity.role !== 'participant') throw new Error();
+    assert.equal((await api('/api/editor/assets')).status, 401);
+    assert.equal((await api('/api/editor/assets', voter)).status, 403);
+    assert.equal((await api('/api/editor/assets', other)).data.session, b);
+    const initial = (await api('/api/editor/assets', token)).data;
+    assert.equal(initial.scenes.length, config.scenes.length);
+    assert.equal(initial.session, a);
+    assert.ok(
+      !/PRIVATE NAME|PRIVATE NOTES|0612345678|editor@example|EDITOR-PRESENTATION-A/.test(
+        JSON.stringify(initial),
+      ),
+    );
+    const command = (
+      action: 'activate' | 'open' | 'close' | 'results' | 'finish' | 'reset',
+      sceneId?: string,
+    ) => server.store.command(a, action, server.store.session(a)!.version, sceneId);
+    for (const scene of config.scenes.slice(0, 2)) {
+      command('activate', scene.id);
+      command('open');
+      server.store.vote(identity, {
+        sceneId: scene.id,
+        epoch: 0,
+        optionIds: [scene.poll.options[0].id],
+        words: scene.words.options.slice(0, 1),
+        requestId: randomUUID(),
+      });
+      assert.equal(
+        server.store.editorAssets(a).scenes.find((s) => s.scene.id === scene.id)!.results.total,
+        1,
+      );
+      command('close');
+      command('results');
+    }
+    const feed = server.store.editorAssets(a);
+    assert.equal(feed.scenes[0].results.total, 1);
+    assert.equal(feed.scenes[1].results.total, 1);
+    command('reset');
+    assert.equal(server.store.editorAssets(a).scenes[0].results.total, 1);
+    assert.equal(server.store.editorAssets(a).scenes[1].results.total, 0);
+    command('finish');
+    const version = server.store.session(a)!.version;
+    assert.equal(
+      (
+        await api('/api/admin/reset-presentation', token, {
+          expectedVersion: version,
+          confirm: false,
+        })
+      ).status,
+      400,
+    );
+    assert.equal(
+      (
+        await api('/api/admin/reset-presentation', voter, {
+          expectedVersion: version,
+          confirm: true,
+        })
+      ).status,
+      403,
+    );
+    assert.equal(
+      (
+        await api('/api/admin/reset-presentation', token, {
+          expectedVersion: version - 1,
+          confirm: true,
+        })
+      ).status,
+      409,
+    );
+    const restarted = await api('/api/admin/reset-presentation', token, {
+      expectedVersion: version,
+      confirm: true,
+    });
+    assert.equal(restarted.status, 200);
+    assert.equal(restarted.data.editable, true);
+    assert.equal(restarted.data.voters.length, 1);
+    assert.equal(restarted.data.code, 'EDITOR-PRESENTATION-A');
+    assert.equal(server.store.identity(voter)?.sessionId, a);
+    assert.equal(server.store.session(a)!.state, 'WAITING');
+    assert.equal(server.store.session(a)!.scene_index, 0);
+    assert.equal(server.store.account(a)!.vote_ends_at, null);
+    assert.ok(
+      server.store.editorAssets(a).scenes.every((s) => s.results.total === 0 && s.epoch > 0),
+    );
+    assert.equal(server.store.editorAssets(b).scenes[0].epoch, 0);
+    // Editing after rehearsal must retain the incremented epoch, so an old buffered ballot cannot slip in.
+    server.store.savePresentation(a, config, restarted.data.revision);
+    command('activate');
+    command('open');
+    const scene = config.scenes[0];
+    assert.throws(
+      () =>
+        server.store.vote(identity, {
+          sceneId: scene.id,
+          epoch: 0,
+          optionIds: [scene.poll.options[0].id],
+          words: [],
+          requestId: randomUUID(),
+        }),
+      /activité a changé/,
+    );
+    server.store.vote(identity, {
+      sceneId: scene.id,
+      epoch: server.store.epoch(server.store.session(a)!),
+      optionIds: [scene.poll.options[0].id],
+      words: [],
+      requestId: randomUUID(),
+    });
+    assert.equal(server.store.editorAssets(a).scenes[0].results.total, 1);
   } finally {
     await server.close();
   }

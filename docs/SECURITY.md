@@ -4,12 +4,12 @@ New dashboard presentations authenticate the organizer using an email identifier
 
 ## Permissions
 
-| Role                          | Operations                                                                                                    |
-| ----------------------------- | ------------------------------------------------------------------------------------------------------------- |
-| Public projector / asset tray | Current scene/status and public join URL; aggregates only in RESULTS                                          |
-| Participant                   | Authenticate, view current state and their own submitted status, submit one valid current-round answer        |
-| Presenter                     | Start/finish, scene/state changes, reset, read aggregates, export anonymous CSV, delete finished-session data |
-| Local DB administrator        | Import/deactivate/delete whitelist and manage retention/backups                                               |
+| Role                   | Operations                                                                                                    |
+| ---------------------- | ------------------------------------------------------------------------------------------------------------- |
+| Public projector       | Current scene/status and public join URL; aggregates only in RESULTS                                          |
+| Participant            | Authenticate, view current state and their own submitted status, submit one valid current-round answer        |
+| Presenter              | Start/finish, scene/state changes, reset, read aggregates, export anonymous CSV, delete finished-session data |
+| Local DB administrator | Import/deactivate/delete whitelist and manage retention/backups                                               |
 
 New presenter bearer tokens are scoped to exactly one presentation, stored as hashes in SQLite, expire after 12 hours, and survive a service restart. The browser keeps its token for reload/reconnection; logout revokes it. Draft edits use a revision check, and questions lock after the first live command. Roster removal immediately blocks the participant's token without deleting saved votes, and re-adding that phone does not revive old tokens. Legacy maintenance login still uses the environment-only ADMIN_KEY and expiring in-memory tokens. Tokens never appear in URLs, QR codes, CSVs or public screens. All privileged routes check roles and presentation scope; cross-presentation exports/deletion are rejected. Production CSP and React text rendering avoid untrusted HTML execution.
 
@@ -28,3 +28,5 @@ CORS allows configured exact origins, including `onlyoffice://plugin` and option
 `.env`, SQLite, data/, work/, private credential CSVs, generated bundles and test traces are ignored. `.env.example` has placeholders only. Production refuses short, equal or placeholder secrets. `npm run demo` overrides DB and keys with **public fake credentials**; use it only for demonstration. Simulation and seed are disabled against production. Do not import real students into the demo database.
 
 Code import updates do not revoke already-authenticated sessions on their own; changing a code is not an emergency logout feature. To revoke immediately, deactivate the participant or finish/delete the session. Whitelist administration is intentionally local and privileged. Hosting account creation, paid plans, domain changes and live student import were not performed during development.
+
+Editor 1.2 uses the organizer email/code login and its own locally stored scoped presenter token. The private all-scene feed includes live anonymous counts but no roster, notes or credentials. Only authenticated editor sockets receive the assets event. Confirmation and optimistic version checks guard resets; full rehearsal reset increments every scene epoch so delayed old ballots fail. Tokens and the roster remain valid; prior vote records are permanently cleared after confirmation. The current plugin UI offers no administrative mutations.

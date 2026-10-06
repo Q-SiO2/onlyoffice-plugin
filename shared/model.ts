@@ -104,6 +104,17 @@ export type Aggregate = {
   poll: { id: string; label: string; count: number; percentage: number }[];
   words: { word: string; count: number }[];
 };
+// Private editor feed: all prepared scenes, aggregates only, no roster or credentials.
+export type EditorAssets = {
+  session: string;
+  title: string;
+  version: number;
+  revision: number;
+  state: State;
+  activeSceneId: string | null;
+  joinUrl: string;
+  scenes: { scene: Scene; epoch: number; results: Aggregate }[];
+};
 export type Snapshot = {
   session: string | null;
   title: string;
