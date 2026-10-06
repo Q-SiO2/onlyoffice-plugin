@@ -8,7 +8,13 @@ export default defineConfig({
     strictPort: true,
     // Vite handles OPTIONS before the API proxy. Keep desktop plugin login preflights working.
     cors: {
-      origin: ['http://localhost:5173', 'http://127.0.0.1:5173', 'onlyoffice://plugin', 'null'],
+      origin: [
+        'http://localhost:5173',
+        'http://127.0.0.1:5173',
+        'onlyoffice://plugin',
+        'null',
+        'file://',
+      ],
     },
     proxy: {
       '/api': 'http://127.0.0.1:3000',

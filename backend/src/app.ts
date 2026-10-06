@@ -35,7 +35,12 @@ export function createApp(settings: Settings) {
   const app = express(),
     http = createServer(app);
   const admins = new Map<string, number>();
-  const validOrigin = (origin: string | undefined) => !origin || settings.origins.includes(origin);
+  const validOrigin = (origin: string | undefined) =>
+    !origin ||
+    settings.origins.includes(origin) ||
+    // Legacy Desktop Editors serializes local plugin origins as file:// rather than null.
+    // Keep it gated by the existing opaque/local-file opt-in, never reflect arbitrary origins.
+    (origin === 'file://' && settings.origins.includes('null'));
   const io = new Server(http, {
     cors: { origin: (origin, cb) => cb(null, validOrigin(origin)), methods: ['GET', 'POST'] },
     allowRequest: (req, cb) => cb(null, validOrigin(req.headers.origin)),
@@ -59,11 +64,14 @@ export function createApp(settings: Settings) {
   );
   app.use(
     cors({
-      origin: (origin, cb) =>
+      origin: (origin, cb) => {
+        if (!validOrigin(origin))
+          console.warn('CORS rejected origin:', JSON.stringify(origin?.slice(0, 160)));
         cb(
           validOrigin(origin) ? null : new AppError(403, 'ORIGIN', 'Origine non autorisée.'),
           validOrigin(origin),
-        ),
+        );
+      },
       allowedHeaders: ['Authorization', 'Content-Type'],
       methods: ['GET', 'POST', 'DELETE', 'OPTIONS'],
     }),

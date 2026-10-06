@@ -355,3 +355,96 @@ test('HTTP permissions, CORS preflight, realtime state, reconnect and concurrent
     409,
   );
 });
+
+test('legacy desktop file origin supports login, private HTTP and editor WebSocket only with local-origin opt-in', async () => {
+  const runtime = createApp(settings);
+  await new Promise<void>((resolve) => runtime.http.listen(0, '127.0.0.1', resolve));
+  const url = `http://127.0.0.1:${(runtime.http.address() as { port: number }).port}`;
+  let socket: Socket | undefined;
+  try {
+    const id = runtime.store.createPresentation(
+      'legacy-editor@example.test',
+      'LEGACY-EDITOR-PRESENTATION',
+      'Editor',
+    );
+    runtime.store.savePresentation(id, runtime.store.config, 1);
+    const preflight = await fetch(url + '/api/presentations/login', {
+      method: 'OPTIONS',
+      headers: {
+        Origin: 'file://',
+        'Access-Control-Request-Method': 'POST',
+        'Access-Control-Request-Headers': 'content-type,authorization',
+      },
+    });
+    assert.equal(preflight.status, 204);
+    assert.equal(preflight.headers.get('access-control-allow-origin'), 'file://');
+    assert.ok(
+      preflight.headers
+        .get('access-control-allow-headers')!
+        .toLowerCase()
+        .includes('authorization'),
+    );
+    const login = await fetch(url + '/api/presentations/login', {
+      method: 'POST',
+      headers: { Origin: 'file://', 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        email: 'legacy-editor@example.test',
+        code: 'LEGACY-EDITOR-PRESENTATION',
+      }),
+    });
+    assert.equal(login.status, 200);
+    assert.equal(login.headers.get('access-control-allow-origin'), 'file://');
+    const { token } = await login.json();
+    const feed = await fetch(url + '/api/editor/assets', {
+      headers: { Origin: 'file://', Authorization: `Bearer ${token}` },
+    });
+    assert.equal(feed.status, 200);
+    assert.equal(feed.headers.get('access-control-allow-origin'), 'file://');
+    assert.equal((await feed.json()).scenes.length, 2);
+    assert.equal(
+      (await fetch(url + '/api/editor/assets', { headers: { Origin: 'file://' } })).status,
+      401,
+    );
+    assert.equal(
+      (
+        await fetch(url + '/api/editor/assets', {
+          headers: { Origin: 'https://untrusted.example', Authorization: `Bearer ${token}` },
+        })
+      ).status,
+      403,
+    );
+    socket = io(url, {
+      autoConnect: false,
+      transports: ['websocket'],
+      extraHeaders: { Origin: 'file://' },
+      auth: { token, editor: true },
+    });
+    const assets = new Promise<{ session: string }>((resolve, reject) => {
+      const deadline = setTimeout(() => reject(new Error('Editor socket timed out')), 3000);
+      socket!.once('assets', (data) => {
+        clearTimeout(deadline);
+        resolve(data);
+      });
+      socket!.once('connect_error', (e) => {
+        clearTimeout(deadline);
+        reject(e);
+      });
+    });
+    socket.connect();
+    assert.equal((await assets).session, id);
+  } finally {
+    socket?.disconnect();
+    await runtime.close();
+  }
+  const strict = createApp({ ...settings, origins: ['http://localhost:5173'] });
+  await new Promise<void>((resolve) => strict.http.listen(0, '127.0.0.1', resolve));
+  try {
+    const strictUrl = `http://127.0.0.1:${(strict.http.address() as { port: number }).port}`;
+    assert.equal(
+      (await fetch(strictUrl + '/api/health', { headers: { Origin: 'file://' } })).status,
+      403,
+    );
+  } finally {
+    await strict.close();
+  }
+});

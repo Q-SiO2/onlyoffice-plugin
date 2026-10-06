@@ -21,7 +21,7 @@ All HTTP mutations require server-side role checks. Client-disabled buttons are 
 
 Login has a shared-IP 300/minute limit to accommodate classroom NAT plus 8/minute per normalized phone hash; vote requests have a 20/minute bearer-token limit. Rate limits use in-process memory, not a distributed abuse service. Do not deploy many replicas or trust arbitrary forwarding headers. `TRUST_PROXY` must equal the real number of reverse-proxy hops; production public hosting should retain its upstream traffic protections. Login errors do not distinguish unknown phone from wrong code; an unknown number still incurs scrypt verification.
 
-CORS allows configured exact origins, including `onlyoffice://plugin` and optional legacy `null`; WebSocket upgrades enforce the same list. CORS is not authorization and nonbrowser clients can omit Origin. `null` can be any opaque sandbox/file origin, not ONLYOFFICE alone. Keep it only if your desktop version needs it. No credentialed cookies are used. HTTPS is required for internet deployment; HTTP LAN demo sends credentials in cleartext to the local network.
+CORS allows configured exact origins, including `onlyoffice://plugin` and optional legacy `null`; enabling `null` also permits the exact `file://` serialization used by legacy Desktop Editors. Disabling the local-origin opt-in rejects that alias; WebSocket upgrades enforce the same list. CORS is not authorization and nonbrowser clients can omit Origin. `null` can be any opaque sandbox/file origin, not ONLYOFFICE alone. Keep it only if your desktop version needs it. No credentialed cookies are used. HTTPS is required for internet deployment; HTTP LAN demo sends credentials in cleartext to the local network.
 
 ## Secrets and demo separation
 

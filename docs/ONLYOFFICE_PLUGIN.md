@@ -48,7 +48,7 @@ The viewport-height `#root` scrolls independently when the host locks document/b
 
 The editor stores its scoped 12-hour token, server origin and organizer email locally; the presentation code is cleared after login. Fetch and Socket.IO connect directly to the selected origin. `/api/editor/assets` requires an owned presenter token and returns prepared questions and anonymous aggregates for every scene, including live votes. It excludes organizer notes, codes, email and voter identities. Public projection remains RESULTS-only. Use HTTPS for the hosted service. Vite explicitly handles desktop login preflights before its API proxy.
 
-Modern documentation describes `onlyoffice://plugin`; installed 9.3.1.8 previously loaded local plugin HTML from `file://` with opaque `Origin: null`. The explicit allowlist supports both. Opaque origins cannot uniquely identify ONLYOFFICE; admin mutations still require bearer authentication on the website. Do not disable browser security.
+Modern documentation describes `onlyoffice://plugin`; installed 9.3.1.8 previously loaded local plugin HTML from `file://` with opaque `Origin: null`. The explicit allowlist supports both. Native 9.4.0.129/Chromium 109 also sends a legacy `file://` serialization: the backend permits exactly that value only when the existing local/opaque `null` origin is enabled. Opaque origins cannot uniquely identify ONLYOFFICE; admin mutations still require bearer authentication on the website. Do not disable browser security.
 
 The SDK, Unlumen primitives, fonts and licenses are locally bundled. The legacy public `window.html` entry remains packaged for compatibility, but the asset tray does not open windows or mount the admin dashboard.
 
